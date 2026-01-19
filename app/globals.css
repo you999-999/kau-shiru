@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #F9F8F6;
+  
+  /* Emerald color palette */
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  
+  /* Coral color palette */
+  --color-coral-50: #fff5f2;
+  --color-coral-500: #ff7f50;
+  --color-coral-700: #ff6347;
+}
+
+:root {
+  --background: var(--color-background);
+  --emerald: var(--color-emerald-500);
+  --coral: var(--color-coral-500);
+}
+
+body {
+  background-color: var(--background);
+  color: #1f2937;
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti linear forwards;
+}

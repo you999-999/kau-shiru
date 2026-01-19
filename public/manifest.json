@@ -1,0 +1,12 @@
+{
+  "name": "かうしる - 愛知西部の物価予報",
+  "short_name": "かうしる",
+  "description": "物価・サイズ・感情を記録し、エリア全体の物価予報を作る",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F9F8F6",
+  "theme_color": "#F9F8F6",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "ja"
+}
