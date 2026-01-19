@@ -1,58 +1,29 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getAreaStats, getPriceTrends, CategoryStats, PriceTrend } from '../actions'
+import { CategoryStats, PriceTrend } from '../actions'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { Sparkline } from './Sparkline'
 
 interface AreaStatsProps {
-  refreshKey?: number
+  areaStats: CategoryStats[]
+  priceTrends: Record<string, PriceTrend[]>
 }
 
-export function AreaStats({ refreshKey = 0 }: AreaStatsProps) {
-  const [stats, setStats] = useState<CategoryStats[]>([])
-  const [priceTrends, setPriceTrends] = useState<Record<string, PriceTrend[]>>({})
-  const [loading, setLoading] = useState(true)
+export function AreaStats({ areaStats: stats, priceTrends }: AreaStatsProps) {
   const [previousStats, setPreviousStats] = useState<CategoryStats[]>([])
 
   useEffect(() => {
-    const loadStats = async () => {
-      setLoading(true)
-      const [statsResult, trendsResult] = await Promise.all([
-        getAreaStats(),
-        getPriceTrends(),
-      ])
-      
-      if (statsResult.success && statsResult.data) {
-        // 前回の統計を保存（前日比計算用）
-        setPreviousStats(prev => stats.length > 0 ? stats : prev)
-        setStats(statsResult.data)
-      }
-      
-      if (trendsResult.success && trendsResult.data) {
-        setPriceTrends(trendsResult.data)
-      }
-      
-      setLoading(false)
+    // 前回の統計を保存（前日比計算用）
+    if (stats.length > 0) {
+      setPreviousStats(prev => prev.length > 0 ? prev : stats)
     }
-
-    loadStats()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey])
+  }, [stats])
 
   const getPriceComparison = (category: string, currentAvg: number): number | null => {
     const prev = previousStats.find(s => s.item_category === category)
     if (!prev) return null
     return currentAvg - prev.avg_price
-  }
-
-  if (loading) {
-    return (
-      <div className="mb-6 p-6 bg-white rounded-2xl shadow-sm border border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">愛知西部のいまの相場</h3>
-        <p className="text-xs text-gray-500">読み込み中...</p>
-      </div>
-    )
   }
 
   if (stats.length === 0) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getMyPosts, deletePost, getAreaStats, CategoryStats } from '../actions'
+import { getMyPosts, deletePost, CategoryStats } from '../actions'
 import { Egg, Milk, Beef, Carrot, Package, Trash2, User } from 'lucide-react'
 
 interface Post {
@@ -34,13 +34,13 @@ const sentimentEmojis = ['😊', '🙂', '😐', '😕', '😞']
 interface MyPostsProps {
   userUuid: string | null
   refreshKey?: number
+  areaStats: CategoryStats[]
 }
 
-export function MyPosts({ userUuid, refreshKey = 0 }: MyPostsProps) {
+export function MyPosts({ userUuid, refreshKey = 0, areaStats }: MyPostsProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [areaStats, setAreaStats] = useState<CategoryStats[]>([])
 
   // 価格比較ロジック（ポジティブな情報のみ）
   const getPriceComparison = (post: Post): { label: string; color: string; bgColor: string; badge?: string } | null => {
@@ -112,19 +112,10 @@ export function MyPosts({ userUuid, refreshKey = 0 }: MyPostsProps) {
       }
 
       setLoading(true)
+      const result = await getMyPosts(userUuid)
       
-      // 投稿と統計を並行して取得
-      const [postsResult, statsResult] = await Promise.all([
-        getMyPosts(userUuid),
-        getAreaStats(),
-      ])
-      
-      if (postsResult.success && postsResult.data) {
-        setPosts(postsResult.data as Post[])
-      }
-      
-      if (statsResult.success && statsResult.data) {
-        setAreaStats(statsResult.data)
+      if (result.success && result.data) {
+        setPosts(result.data as Post[])
       }
       
       setLoading(false)

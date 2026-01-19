@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Egg, Milk, Beef, Carrot, Package } from 'lucide-react'
 import { useUserUuid } from '@/hooks/useUserUuid'
-import { savePost, getAreaStats, CategoryStats } from './actions'
+import { savePost, getAreaStats, getPriceTrends, CategoryStats, PriceTrend } from './actions'
 import { RecentForecast } from './components/RecentForecast'
 import { MyPosts } from './components/MyPosts'
 import { AreaStats } from './components/AreaStats'
@@ -48,6 +48,7 @@ export default function Home() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [areaStats, setAreaStats] = useState<CategoryStats[]>([])
+  const [priceTrends, setPriceTrends] = useState<Record<string, PriceTrend[]>>({})
 
   const calculateTaxIncluded = (priceValue: number): number => {
     return Math.round(priceValue * 1.08)
@@ -103,12 +104,20 @@ export default function Home() {
   const priceValue = parseInt(price) || 0
   const taxIncludedPrice = isTaxIncluded ? priceValue : calculateTaxIncluded(priceValue)
 
-  // 統計データを取得
+  // 統計データを取得（一度だけ取得して子コンポーネントに共有）
   useEffect(() => {
     const loadStats = async () => {
-      const result = await getAreaStats()
-      if (result.success && result.data) {
-        setAreaStats(result.data)
+      const [statsResult, trendsResult] = await Promise.all([
+        getAreaStats(),
+        getPriceTrends(),
+      ])
+      
+      if (statsResult.success && statsResult.data) {
+        setAreaStats(statsResult.data)
+      }
+      
+      if (trendsResult.success && trendsResult.data) {
+        setPriceTrends(trendsResult.data)
       }
     }
     loadStats()
@@ -179,7 +188,7 @@ export default function Home() {
         <ShoppingList areaStats={areaStats} />
 
         {/* 地域統計 */}
-        <AreaStats refreshKey={refreshKey} />
+        <AreaStats areaStats={areaStats} priceTrends={priceTrends} />
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-8 space-y-8 mb-6">
         {/* カテゴリ選択 */}
@@ -382,7 +391,7 @@ export default function Home() {
         </form>
 
         {/* じぶんの最近の記録 */}
-        <MyPosts userUuid={userUuid} refreshKey={refreshKey} />
+        <MyPosts userUuid={userUuid} refreshKey={refreshKey} areaStats={areaStats} />
 
         {/* みんなの最近の予報 */}
         <RecentForecast refreshKey={refreshKey} />
