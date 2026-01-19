@@ -22,7 +22,7 @@ export function Footer() {
           </Link>
         </div>
         <p className="text-xs text-gray-500 text-center mt-4">
-          © 2024 かうしる
+          © 2026 かうしる
         </p>
       </div>
     </footer>
