@@ -124,6 +124,22 @@ export default function PrivacyPage() {
             </p>
           </section>
 
+          {/* お問い合わせ */}
+          <section>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">6. お問い合わせ</h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              本ポリシーに関するお問い合わせは、以下のGmailアドレスまでお願いいたします：
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              <a
+                href="mailto:ichigoichie.contact.0015@gmail.com"
+                className="text-emerald-600 hover:text-emerald-700 font-medium underline"
+              >
+                ichigoichie.contact.0015@gmail.com
+              </a>
+            </p>
+          </section>
+
           <div className="pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-500 text-center">
               最終更新日: 2024年
