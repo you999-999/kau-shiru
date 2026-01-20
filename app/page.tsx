@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Egg, Milk, Beef, Carrot, Package } from 'lucide-react'
 import { useUserUuid } from '@/hooks/useUserUuid'
 import { savePost, getAreaStats, getPriceTrends, CategoryStats, PriceTrend } from './actions'
@@ -9,6 +10,9 @@ import { MyPosts } from './components/MyPosts'
 import { AreaStats } from './components/AreaStats'
 import { ShoppingList } from './components/ShoppingList'
 import { AreaSelector } from './components/AreaSelector'
+import { SocialShare } from './components/SocialShare'
+import { StructuredData } from './components/StructuredData'
+import { AdBanner } from './components/AdBanner'
 
 type Category = '卵' | '牛乳' | '肉' | '野菜' | 'その他'
 type SizeStatus = 'normal' | 'less' | 'tiny'
@@ -156,14 +160,32 @@ export default function Home() {
 
   return (
     <main className="min-h-screen p-4 pb-8">
+      <StructuredData type="WebApplication" />
       <div className="max-w-md mx-auto">
         {/* ヘッダー */}
-        <div className="mb-6 pt-8 flex items-center justify-between">
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">買い物にお得感と楽しさを！</h1>
+        <div className="mb-6 pt-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-2">
+                かうしる
+                <span className="inline-flex items-center" style={{ height: '1em', lineHeight: '1' }}>
+                  <Image
+                    src="/gazou/kausiru.png"
+                    alt="かうしる"
+                    width={36}
+                    height={36}
+                    className="object-contain"
+                    style={{ height: '1em', width: 'auto' }}
+                  />
+                </span>
+              </h1>
+            </div>
+            <AreaSelector />
+          </div>
+          <div className="mb-2">
+            <p className="text-gray-600 text-sm">買い物にお得感と楽しさを！</p>
             <p className="text-gray-600 text-sm">地域の知恵が集まる物価メモ</p>
           </div>
-          <AreaSelector />
         </div>
 
         {/* 紙吹雪アニメーション */}
@@ -183,6 +205,15 @@ export default function Home() {
             ))}
           </div>
         )}
+
+        {/* 広告バナー（ヘッダー下） */}
+        <div className="mb-6">
+          <AdBanner 
+            adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HEADER}
+            className="w-full"
+            format="horizontal"
+          />
+        </div>
 
         {/* 買い物リスト */}
         <ShoppingList areaStats={areaStats} />
@@ -395,6 +426,21 @@ export default function Home() {
 
         {/* みんなの最近の予報 */}
         <RecentForecast refreshKey={refreshKey} />
+
+        {/* 広告バナー（コンテンツ間） */}
+        <div className="mt-8">
+          <AdBanner 
+            adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_CONTENT}
+            className="w-full"
+            format="auto"
+          />
+        </div>
+
+        {/* ソーシャルシェア */}
+        <div className="mt-8 p-6 bg-white rounded-2xl shadow-sm border border-gray-200">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">友達にもシェアしよう！</h3>
+          <SocialShare />
+        </div>
       </div>
     </main>
   )
