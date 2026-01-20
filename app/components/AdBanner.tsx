@@ -12,21 +12,24 @@ interface AdBannerProps {
 
 export function AdBanner({ 
   adSlot, 
-  adClient = 'ca-pub-XXXXXXXXXX', // Google AdSenseのパブリッシャーIDに変更
+  adClient, 
   style,
   className = '',
   format = 'auto'
 }: AdBannerProps) {
   const adRef = useRef<HTMLDivElement>(null)
+  
+  // 環境変数から取得（Next.jsではNEXT_PUBLIC_*はビルド時にクライアントバンドルに埋め込まれる）
+  const effectiveAdClient = adClient || process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 
   useEffect(() => {
-    if (!adSlot || !adClient || typeof window === 'undefined') return
+    if (!adSlot || !effectiveAdClient || effectiveAdClient === 'ca-pub-XXXXXXXXXX' || typeof window === 'undefined') return
 
     try {
       // Google AdSense スクリプトを読み込む
       if (!(window as any).adsbygoogle) {
         const script = document.createElement('script')
-        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + adClient
+        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + effectiveAdClient
         script.async = true
         script.crossOrigin = 'anonymous'
         document.head.appendChild(script)
@@ -43,18 +46,11 @@ export function AdBanner({
     } catch (error) {
       console.error('AdSense initialization error:', error)
     }
-  }, [adSlot, adClient])
+  }, [adSlot, effectiveAdClient])
 
-  if (!adSlot) {
-    // 開発環境や広告IDがない場合はプレースホルダーを表示
-    return (
-      <div 
-        className={`bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center ${className}`}
-        style={{ minHeight: '100px', ...style }}
-      >
-        <p className="text-gray-400 text-sm">広告スペース</p>
-      </div>
-    )
+  // 環境変数が設定されていない場合は完全に非表示（スペースも取らない）
+  if (!adSlot || !effectiveAdClient || effectiveAdClient === 'ca-pub-XXXXXXXXXX') {
+    return null
   }
 
   return (
@@ -63,7 +59,7 @@ export function AdBanner({
         ref={adRef}
         className="adsbygoogle"
         style={{ display: 'block' }}
-        data-ad-client={adClient}
+        data-ad-client={effectiveAdClient}
         data-ad-slot={adSlot}
         data-ad-format={format}
         data-full-width-responsive="true"

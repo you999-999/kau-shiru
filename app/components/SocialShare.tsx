@@ -49,44 +49,41 @@ export function SocialShare({
     <div className="flex items-center gap-2 flex-wrap">
       <button
         onClick={handleShare}
-        className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium"
+        className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-colors text-xs font-normal"
         title="シェア"
       >
-        <Share2 className="w-4 h-4" />
-        {copied ? 'コピーしました！' : 'シェア'}
+        <Share2 className="w-3.5 h-3.5" />
+        {copied ? 'コピーしました' : 'シェア'}
       </button>
 
       <a
         href={shareLinks.twitter}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors text-sm font-medium"
+        className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-colors text-xs font-normal"
         title="Twitterでシェア"
       >
-        <Twitter className="w-4 h-4" />
-        <span className="hidden sm:inline">Twitter</span>
+        <Twitter className="w-3.5 h-3.5" />
       </a>
 
       <a
         href={shareLinks.line}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-2 px-4 py-2 bg-[#06C755] text-white rounded-lg hover:bg-[#05B04A] transition-colors text-sm font-medium"
+        className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-colors text-xs font-normal"
         title="LINEでシェア"
       >
-        <MessageCircle className="w-4 h-4" />
-        <span className="hidden sm:inline">LINE</span>
+        <MessageCircle className="w-3.5 h-3.5" />
       </a>
 
       <a
         href={shareLinks.facebook}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-2 px-4 py-2 bg-[#1877F2] text-white rounded-lg hover:bg-[#166FE5] transition-colors text-sm font-medium"
+        className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-colors text-xs font-normal"
         title="Facebookでシェア"
       >
-        <Facebook className="w-4 h-4" />
-        <span className="hidden sm:inline">Facebook</span>
+        <Facebook className="w-3.5 h-3.5" />
       </a>
     </div>
   )

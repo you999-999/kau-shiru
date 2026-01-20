@@ -206,14 +206,16 @@ export default function Home() {
           </div>
         )}
 
-        {/* 広告バナー（ヘッダー下） */}
-        <div className="mb-6">
-          <AdBanner 
-            adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HEADER}
-            className="w-full"
-            format="horizontal"
-          />
-        </div>
+        {/* 広告バナー（ヘッダー下） - 環境変数が設定されている場合のみ表示 */}
+        {process.env.NEXT_PUBLIC_ADSENSE_SLOT_HEADER && (
+          <div className="mb-6">
+            <AdBanner 
+              adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HEADER}
+              className="w-full"
+              format="horizontal"
+            />
+          </div>
+        )}
 
         {/* 買い物リスト */}
         <ShoppingList areaStats={areaStats} />
@@ -427,18 +429,19 @@ export default function Home() {
         {/* みんなの最近の予報 */}
         <RecentForecast refreshKey={refreshKey} />
 
-        {/* 広告バナー（コンテンツ間） */}
-        <div className="mt-8">
-          <AdBanner 
-            adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_CONTENT}
-            className="w-full"
-            format="auto"
-          />
-        </div>
+        {/* 広告バナー（コンテンツ間） - 環境変数が設定されている場合のみ表示 */}
+        {process.env.NEXT_PUBLIC_ADSENSE_SLOT_CONTENT && (
+          <div className="mt-8">
+            <AdBanner 
+              adSlot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_CONTENT}
+              className="w-full"
+              format="auto"
+            />
+          </div>
+        )}
 
-        {/* ソーシャルシェア */}
-        <div className="mt-8 p-6 bg-white rounded-2xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">友達にもシェアしよう！</h3>
+        {/* ソーシャルシェア - 控えめに配置 */}
+        <div className="mt-8 pt-6 border-t border-gray-100">
           <SocialShare />
         </div>
       </div>
