@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Egg, Milk, Beef, Carrot, Package } from 'lucide-react'
+import { Egg, Milk, Beef, Carrot, Snowflake, Package } from 'lucide-react'
 import { useUserUuid } from '@/hooks/useUserUuid'
 import { savePost, getAreaStats, getPriceTrends, CategoryStats, PriceTrend } from './actions'
 import { RecentForecast } from './components/RecentForecast'
@@ -14,7 +14,7 @@ import { SocialShare } from './components/SocialShare'
 import { StructuredData } from './components/StructuredData'
 import { AdBanner } from './components/AdBanner'
 
-type Category = '卵' | '牛乳' | '肉' | '野菜' | 'その他'
+type Category = '卵' | '牛乳' | '肉' | '野菜' | '冷凍食品' | 'その他'
 type SizeStatus = 'normal' | 'less' | 'tiny'
 
 const categories: { value: Category; icon: typeof Egg; label: string }[] = [
@@ -22,6 +22,7 @@ const categories: { value: Category; icon: typeof Egg; label: string }[] = [
   { value: '牛乳', icon: Milk, label: '牛乳' },
   { value: '肉', icon: Beef, label: '肉' },
   { value: '野菜', icon: Carrot, label: '野菜' },
+  { value: '冷凍食品', icon: Snowflake, label: '冷凍食品' },
   { value: 'その他', icon: Package, label: 'その他' },
 ]
 
@@ -108,7 +109,7 @@ export default function Home() {
   const priceValue = parseInt(price) || 0
   const taxIncludedPrice = isTaxIncluded ? priceValue : calculateTaxIncluded(priceValue)
 
-  // 統計データを取得（一度だけ取得して子コンポーネントに共有）
+  // 統計データを取得（初回ロード時のみ）
   useEffect(() => {
     const loadStats = async () => {
       const [statsResult, trendsResult] = await Promise.all([
@@ -125,6 +126,28 @@ export default function Home() {
       }
     }
     loadStats()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // 初回ロード時のみ実行
+
+  // 投稿成功時のみ統計データを再取得
+  useEffect(() => {
+    if (refreshKey > 0) {
+      const loadStats = async () => {
+        const [statsResult, trendsResult] = await Promise.all([
+          getAreaStats(),
+          getPriceTrends(),
+        ])
+        
+        if (statsResult.success && statsResult.data) {
+          setAreaStats(statsResult.data)
+        }
+        
+        if (trendsResult.success && trendsResult.data) {
+          setPriceTrends(trendsResult.data)
+        }
+      }
+      loadStats()
+    }
   }, [refreshKey])
 
   // 価格比較ロジック（ポジティブな情報のみ）

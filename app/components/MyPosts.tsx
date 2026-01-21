@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { getMyPosts, deletePost, CategoryStats } from '../actions'
-import { Egg, Milk, Beef, Carrot, Package, Trash2, User } from 'lucide-react'
+import { Egg, Milk, Beef, Carrot, Snowflake, Package, Trash2, User } from 'lucide-react'
 
 interface Post {
   id: string
@@ -20,6 +20,7 @@ const categoryIcons = {
   牛乳: Milk,
   肉: Beef,
   野菜: Carrot,
+  冷凍食品: Snowflake,
   その他: Package,
 }
 
@@ -103,25 +104,35 @@ export function MyPosts({ userUuid, refreshKey = 0, areaStats }: MyPostsProps) {
     }
   }
 
-  useEffect(() => {
-    const loadData = async () => {
-      if (!userUuid) {
-        setPosts([])
-        setLoading(false)
-        return
-      }
-
-      setLoading(true)
-      const result = await getMyPosts(userUuid)
-      
-      if (result.success && result.data) {
-        setPosts(result.data as Post[])
-      }
-      
+  const loadData = async () => {
+    if (!userUuid) {
+      setPosts([])
       setLoading(false)
+      return
     }
 
+    setLoading(true)
+    const result = await getMyPosts(userUuid)
+    
+    if (result.success && result.data) {
+      setPosts(result.data as Post[])
+    }
+    
+    setLoading(false)
+  }
+
+  // 初回ロード時のみ取得
+  useEffect(() => {
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userUuid]) // userUuidが変わった時のみ
+
+  // 投稿成功時（refreshKeyが変更された時）のみ更新
+  useEffect(() => {
+    if (refreshKey > 0 && userUuid) {
+      loadData()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey, userUuid])
 
   if (!userUuid) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { getRecentPosts, addReaction, removeReaction, getReactionCounts, getUserReactions } from '../actions'
-import { Egg, Milk, Beef, Carrot, Package, ThumbsUp } from 'lucide-react'
+import { Egg, Milk, Beef, Carrot, Snowflake, Package, ThumbsUp } from 'lucide-react'
 import { useUserUuid } from '@/hooks/useUserUuid'
 
 interface Post {
@@ -21,6 +21,7 @@ const categoryIcons = {
   牛乳: Milk,
   肉: Beef,
   野菜: Carrot,
+  冷凍食品: Snowflake,
   その他: Package,
 }
 
@@ -44,33 +45,42 @@ export function RecentForecast({ refreshKey = 0 }: RecentForecastProps) {
   const [userReactions, setUserReactions] = useState<string[]>([])
   const [reactingIds, setReactingIds] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true)
-      const result = await getRecentPosts()
-      if (result.success && result.data) {
-        const postsData = result.data as Post[]
-        setPosts(postsData)
-        
-        // リアクション数を取得
-        const postIds = postsData.map(p => p.id)
-        const [countsResult, reactionsResult] = await Promise.all([
-          getReactionCounts(postIds),
-          userUuid ? getUserReactions(userUuid, postIds) : Promise.resolve({ success: true, data: [] }),
-        ])
-        
-        if (countsResult.success && countsResult.data) {
-          setReactionCounts(countsResult.data)
-        }
-        
-        if (reactionsResult.success && reactionsResult.data) {
-          setUserReactions(reactionsResult.data)
-        }
+  const fetchPosts = async () => {
+    setLoading(true)
+    const result = await getRecentPosts()
+    if (result.success && result.data) {
+      const postsData = result.data as Post[]
+      setPosts(postsData)
+      
+      // リアクション数を取得
+      const postIds = postsData.map(p => p.id)
+      const [countsResult, reactionsResult] = await Promise.all([
+        getReactionCounts(postIds),
+        userUuid ? getUserReactions(userUuid, postIds) : Promise.resolve({ success: true, data: [] }),
+      ])
+      
+      if (countsResult.success && countsResult.data) {
+        setReactionCounts(countsResult.data)
       }
-      setLoading(false)
+      
+      if (reactionsResult.success && reactionsResult.data) {
+        setUserReactions(reactionsResult.data)
+      }
     }
+    setLoading(false)
+  }
 
+  // 初回ロード時のみ取得
+  useEffect(() => {
     fetchPosts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // 初回のみ
+
+  // 投稿成功時（refreshKeyが変更された時）のみ更新
+  useEffect(() => {
+    if (refreshKey > 0) {
+      fetchPosts()
+    }
   }, [refreshKey, userUuid])
 
   const handleReaction = async (postId: string) => {

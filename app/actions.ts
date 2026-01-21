@@ -3,7 +3,7 @@
 import { createServerClient } from '@/utils/supabase/server'
 
 export interface PostData {
-  item_category: '卵' | '牛乳' | '肉' | '野菜' | 'その他'
+  item_category: '卵' | '牛乳' | '肉' | '野菜' | '冷凍食品' | 'その他'
   price: number
   is_tax_included: boolean
   size_status: 'normal' | 'less' | 'tiny'

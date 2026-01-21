@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  item_category TEXT NOT NULL CHECK (item_category IN ('卵', '牛乳', '肉', '野菜', 'その他')),
+  item_category TEXT NOT NULL CHECK (item_category IN ('卵', '牛乳', '肉', '野菜', '冷凍食品', 'その他')),
   price INTEGER NOT NULL CHECK (price > 0),
   is_tax_included BOOLEAN NOT NULL DEFAULT true,
   size_status TEXT NOT NULL CHECK (size_status IN ('normal', 'less', 'tiny')),
