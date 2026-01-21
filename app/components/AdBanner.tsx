@@ -17,7 +17,7 @@ export function AdBanner({
   className = '',
   format = 'auto'
 }: AdBannerProps) {
-  const adRef = useRef<HTMLElement>(null)
+  const adRef = useRef<HTMLModElement>(null)
   
   // 環境変数から取得（Next.jsではNEXT_PUBLIC_*はビルド時にクライアントバンドルに埋め込まれる）
   const effectiveAdClient = adClient || process.env.NEXT_PUBLIC_ADSENSE_CLIENT
