@@ -338,3 +338,58 @@ export async function getUserReactions(userUuid: string, postIds: string[]) {
     return { success: false, data: [], error: String(error) }
   }
 }
+
+// 今日のひとことを取得
+export interface DailyQuote {
+  id: string
+  content: string
+  created_at: string
+}
+
+export async function getTodayQuote(): Promise<{ success: boolean; data: DailyQuote | null; error?: string }> {
+  try {
+    // JST（日本標準時）で今日の00:00と明日の00:00を計算
+    const now = new Date()
+    const jstOffset = 9 * 60 * 60 * 1000 // JSTはUTC+9
+    const jstNow = new Date(now.getTime() + jstOffset)
+    
+    // 今日の00:00（JST）
+    const todayStart = new Date(jstNow)
+    todayStart.setUTCHours(0, 0, 0, 0)
+    const todayStartUTC = new Date(todayStart.getTime() - jstOffset)
+    
+    // 明日の00:00（JST）
+    const tomorrowStart = new Date(todayStart)
+    tomorrowStart.setUTCDate(tomorrowStart.getUTCDate() + 1)
+    const tomorrowStartUTC = new Date(tomorrowStart.getTime() - jstOffset)
+
+    const supabase = createServerClient()
+    
+    // 当日のデータを全件取得してからランダムで1件選択
+    const { data, error } = await supabase
+      .from('daily_quotes')
+      .select('id, content, created_at')
+      .gte('created_at', todayStartUTC.toISOString())
+      .lt('created_at', tomorrowStartUTC.toISOString())
+
+    // テーブルが存在しない場合（PGRST205エラー）は静かに処理
+    if (error) {
+      // テーブルが存在しない場合は成功として扱い、データなしを返す
+      if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+        return { success: true, data: null }
+      }
+      throw error
+    }
+
+    // データがある場合はランダムで1件選択
+    if (data && data.length > 0) {
+      const randomIndex = Math.floor(Math.random() * data.length)
+      return { success: true, data: data[randomIndex] as DailyQuote }
+    }
+
+    return { success: true, data: null }
+  } catch (error) {
+    // その他のエラーも静かに処理（テーブル未作成時など）
+    return { success: true, data: null }
+  }
+}

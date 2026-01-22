@@ -4,6 +4,7 @@ import { Footer } from './components/Footer'
 import { GoogleAnalytics } from './components/GoogleAnalytics'
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://kau-shiru.vercel.app'),
   title: 'かうしる - 愛知西部の物価予報',
   description: '物価・サイズ・感情を記録し、エリア全体の物価予報を作る。地域の知恵が集まる物価メモで、買い物にお得感と楽しさを！',
   keywords: ['物価', '価格', '愛知西部', '買い物', 'お得', 'スーパー', '物価予報', '価格比較'],
