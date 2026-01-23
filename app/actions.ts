@@ -243,19 +243,21 @@ export async function getAreaStats(region?: { big?: string; prefecture?: string;
     // カテゴリごとに統計を計算
     const statsMap: Record<string, { prices: number[]; count: number }> = {}
     
-    data.forEach((post) => {
-      // すべて税込価格に統一
-      const taxIncludedPrice = post.is_tax_included
-        ? post.price
-        : Math.round(post.price * 1.08)
-      
-      if (!statsMap[post.item_category]) {
-        statsMap[post.item_category] = { prices: [], count: 0 }
-      }
-      
-      statsMap[post.item_category].prices.push(taxIncludedPrice)
-      statsMap[post.item_category].count++
-    })
+    if (data) {
+      data.forEach((post) => {
+        // すべて税込価格に統一
+        const taxIncludedPrice = post.is_tax_included
+          ? post.price
+          : Math.round(post.price * 1.08)
+        
+        if (!statsMap[post.item_category]) {
+          statsMap[post.item_category] = { prices: [], count: 0 }
+        }
+        
+        statsMap[post.item_category].prices.push(taxIncludedPrice)
+        statsMap[post.item_category].count++
+      })
+    }
 
     // 各カテゴリの平均、最小、最大を計算
     const stats: CategoryStats[] = Object.entries(statsMap).map(([category, data]) => {
@@ -331,7 +333,8 @@ export async function getPriceTrends(region?: { big?: string; prefecture?: strin
     // カテゴリごと、日付ごとにグループ化
     const trendsMap: Record<string, Record<string, number[]>> = {}
     
-    data.forEach((post) => {
+    if (data) {
+      data.forEach((post) => {
       const taxIncludedPrice = post.is_tax_included
         ? post.price
         : Math.round(post.price * 1.08)
@@ -347,7 +350,8 @@ export async function getPriceTrends(region?: { big?: string; prefecture?: strin
       }
       
       trendsMap[post.item_category][date].push(taxIncludedPrice)
-    })
+      })
+    }
 
     // 各カテゴリの日別平均価格を計算
     const trends: Record<string, PriceTrend[]> = {}
@@ -436,9 +440,11 @@ export async function getReactionCounts(postIds: string[]) {
 
     // 投稿IDごとにカウント
     const counts: Record<string, number> = {}
-    data.forEach((reaction) => {
-      counts[reaction.post_id] = (counts[reaction.post_id] || 0) + 1
-    })
+    if (data) {
+      data.forEach((reaction) => {
+        counts[reaction.post_id] = (counts[reaction.post_id] || 0) + 1
+      })
+    }
 
     return { success: true, data: counts }
   } catch (error) {
