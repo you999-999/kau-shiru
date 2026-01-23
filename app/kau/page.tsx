@@ -9,6 +9,8 @@ import { RegionSelector, RegionData } from '../components/RegionSelector'
 import { DEFAULT_REGION } from '../data/regions'
 import { getUnitsForCategory } from '../data/units'
 import { AreaSelector } from '../components/AreaSelector'
+import { ShoppingMemo } from '../components/ShoppingMemo'
+import { MyPostsNew } from '../components/MyPostsNew'
 import Image from 'next/image'
 
 type Category = '肉' | '魚' | '野菜' | '冷凍食品' | 'その他'
@@ -29,6 +31,7 @@ export default function KauPage() {
   const [selectedRegion, setSelectedRegion] = useState<RegionData>(DEFAULT_REGION)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   // カテゴリに応じた単位リスト
   const availableUnits = category ? getUnitsForCategory(category) : []
@@ -65,6 +68,8 @@ export default function KauPage() {
       setCategory(null)
       setQuantity('')
       setUnit('')
+      // 投稿履歴を更新
+      setRefreshKey(prev => prev + 1)
       
       setTimeout(() => {
         setSubmitSuccess(false)
@@ -102,6 +107,9 @@ export default function KauPage() {
           </div>
           <p className="text-sm text-gray-600">価格を記録して、みんなの相場に貢献</p>
         </div>
+
+        {/* これから買うメモ */}
+        <ShoppingMemo />
 
         {/* 地域選択 */}
         <div className="mb-6 p-4 bg-white rounded-2xl shadow-sm border border-gray-200">
@@ -237,6 +245,9 @@ export default function KauPage() {
             </div>
           )}
         </form>
+
+        {/* 買って記録した一覧 */}
+        <MyPostsNew userUuid={userUuid} refreshKey={refreshKey} />
 
         {/* ナビゲーション */}
         <div className="mt-6 flex gap-4">

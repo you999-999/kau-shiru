@@ -215,3 +215,92 @@ export async function getItemDetail(
     return { success: false, data: null, error: String(error) }
   }
 }
+
+// 新スキーマ用の投稿インターフェース
+export interface PostNew {
+  id: string
+  item_name: string
+  price: number
+  category_new: string
+  quantity: number | null
+  unit: string | null
+  region_big: string | null
+  region_pref: string | null
+  region_city: string | null
+  created_at: string
+  user_uuid: string
+}
+
+// 自分の投稿を取得（新スキーマ用）
+export async function getMyPostsNew(userUuid: string): Promise<{ success: boolean; data: PostNew[]; error?: string }> {
+  try {
+    if (!userUuid) {
+      return { success: true, data: [] }
+    }
+
+    const supabase = createServerClient()
+    const { data, error } = await supabase
+      .from('posts')
+      .select('id, item_name, price, category_new, quantity, unit, region_big, region_pref, region_city, created_at, user_uuid')
+      .eq('user_uuid', userUuid)
+      .not('item_name', 'is', null) // 新スキーマのデータのみ
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    if (error) {
+      // カラムが存在しないエラーの場合は空配列を返す
+      if (error.code === '42703' || error.code === 'PGRST116') {
+        return { success: true, data: [] }
+      }
+      throw error
+    }
+
+    return { success: true, data: (data || []) as PostNew[] }
+  } catch (error) {
+    console.error('Error fetching my posts:', error)
+    return { success: false, data: [], error: String(error) }
+  }
+}
+
+// 投稿を削除（新スキーマ用）
+export async function deletePostNew(postId: string, userUuid: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!userUuid) {
+      return { success: false, error: 'User UUID is required' }
+    }
+
+    const supabase = createServerClient()
+    
+    // まず、投稿がこのユーザーのものか確認
+    const { data: post, error: fetchError } = await supabase
+      .from('posts')
+      .select('user_uuid')
+      .eq('id', postId)
+      .single()
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        return { success: false, error: 'Post not found' }
+      }
+      throw fetchError
+    }
+
+    if (post.user_uuid !== userUuid) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    // 削除実行
+    const { error: deleteError } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', postId)
+      .eq('user_uuid', userUuid)
+
+    if (deleteError) throw deleteError
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting post:', error)
+    return { success: false, error: String(error) }
+  }
+}
