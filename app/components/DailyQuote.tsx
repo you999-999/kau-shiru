@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getTodayQuote, DailyQuote } from '../actions'
+import { getTodayQuote } from '../actions'
+import type { DailyQuote } from '../actions'
 
 export function DailyQuote() {
   const [quote, setQuote] = useState<DailyQuote | null>(null)
