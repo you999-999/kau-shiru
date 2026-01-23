@@ -1,9 +1,14 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
 export default function TermsPage() {
+  // ページ読み込み時にスクロール位置をリセット
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
   return (
     <main className="min-h-screen p-4 pb-8">
       <div className="max-w-2xl mx-auto">

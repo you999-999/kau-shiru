@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useUserUuid } from '@/hooks/useUserUuid'
 import { savePostNew } from '../actions_new'
 import { RegionSelector, RegionData } from '../components/RegionSelector'
@@ -10,10 +11,15 @@ import { getUnitsForCategory } from '../data/units'
 import { AreaSelector } from '../components/AreaSelector'
 import Image from 'next/image'
 
-type Category = '肉' | '魚' | '野菜' | 'その他'
+type Category = '肉' | '魚' | '野菜' | '冷凍食品' | 'その他'
 
 export default function KauPage() {
   const router = useRouter()
+  
+  // ページ読み込み時にスクロール位置をリセット
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
   const userUuid = useUserUuid()
   const [itemName, setItemName] = useState<string>('')
   const [price, setPrice] = useState<string>('')
@@ -62,6 +68,8 @@ export default function KauPage() {
       
       setTimeout(() => {
         setSubmitSuccess(false)
+        // スクロール位置をリセットしてから遷移
+        window.scrollTo(0, 0)
         router.push('/shiru')
       }, 1500)
     } else {
@@ -107,8 +115,8 @@ export default function KauPage() {
             <label className="block text-sm font-medium text-gray-700 mb-3">
               カテゴリ <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-4 gap-3">
-              {(['肉', '魚', '野菜', 'その他'] as Category[]).map((cat) => (
+            <div className="grid grid-cols-5 gap-3">
+              {(['肉', '魚', '野菜', '冷凍食品', 'その他'] as Category[]).map((cat) => (
                 <button
                   key={cat}
                   type="button"
@@ -232,12 +240,12 @@ export default function KauPage() {
 
         {/* ナビゲーション */}
         <div className="mt-6 flex gap-4">
-          <button
-            onClick={() => router.push('/shiru')}
-            className="flex-1 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-all"
+          <Link
+            href="/shiru"
+            className="flex-1 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-all text-center"
           >
             しるページへ →
-          </button>
+          </Link>
         </div>
       </div>
     </main>

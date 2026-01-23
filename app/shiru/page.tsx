@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { getItemStats, ItemStats } from '../actions_new'
 import { RegionSelector, RegionData } from '../components/RegionSelector'
 import { DEFAULT_REGION } from '../data/regions'
@@ -10,7 +11,6 @@ import { REFERENCE_PRICES } from '../data/referencePrices'
 import { AreaSelector } from '../components/AreaSelector'
 import Image from 'next/image'
 import { Star, Search, AlertCircle } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 
 const FAVORITES_STORAGE_KEY = 'kau_shiru_favorites'
 
@@ -26,6 +26,11 @@ export default function ShiruPage() {
   const [loading, setLoading] = useState(true)
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [searchQuery, setSearchQuery] = useState<string>('')
+
+  // ページ読み込み時にスクロール位置をリセット
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   // お気に入りを読み込み
   useEffect(() => {
@@ -198,14 +203,14 @@ export default function ShiruPage() {
                     まだ相場情報がありません
                   </p>
                   <p className="text-xs text-amber-700 mb-3">
-                    最初の投稿者になりましょう！あなたの投稿が、みんなの買い物に役立ちます。
+                    最初の投稿者になってください！あなたの投稿が、みんなの買い物に楽しさをもたらします。
                   </p>
-                  <button
-                    onClick={() => router.push('/kau')}
-                    className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  <Link
+                    href="/kau"
+                    className="inline-block text-xs bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                   >
                     最初の投稿をする →
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -316,12 +321,12 @@ export default function ShiruPage() {
 
         {/* ナビゲーション */}
         <div className="mt-6 flex gap-4">
-          <button
-            onClick={() => router.push('/kau')}
-            className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition-all"
+          <Link
+            href="/kau"
+            className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition-all text-center"
           >
             ← かうページへ
-          </button>
+          </Link>
         </div>
       </div>
     </main>

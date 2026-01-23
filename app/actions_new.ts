@@ -6,7 +6,7 @@ import { createServerClient } from '@/utils/supabase/server'
 export interface PostDataNew {
   item_name: string // 食材名（必須）
   price: number // 価格（必須）
-  category: '肉' | '魚' | '野菜' | 'その他' // カテゴリ（必須）
+  category: '肉' | '魚' | '野菜' | '冷凍食品' | 'その他' // カテゴリ（必須）
   quantity?: number // 量（任意）
   unit?: string // 単位（任意）
   region_big: string // 地域（必須）

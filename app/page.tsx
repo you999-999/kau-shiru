@@ -1,12 +1,16 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import Link from 'next/link'
 import Image from 'next/image'
-import { ShoppingCart, Eye, BookOpen, TrendingDown } from 'lucide-react'
+import { ShoppingCart, Eye, BookOpen, TrendingUp } from 'lucide-react'
 import { OnboardingModal } from './components/OnboardingModal'
 
 export default function Home() {
-  const router = useRouter()
+  // ページ読み込み時にスクロール位置をリセット
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   return (
     <main className="min-h-screen p-4 pb-8 bg-gray-50 flex items-center justify-center">
@@ -36,7 +40,7 @@ export default function Home() {
         {/* 具体的なベネフィット */}
         <div className="mb-8 p-6 bg-white rounded-2xl shadow-sm border border-gray-200">
           <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <TrendingDown className="w-5 h-5 text-emerald-600" />
+            <TrendingUp className="w-5 h-5 text-emerald-600" />
             かうしるを使うと
           </h2>
           <div className="space-y-3">
@@ -73,9 +77,9 @@ export default function Home() {
         {/* ページ選択カード */}
         <div className="space-y-4">
           {/* かうページ */}
-          <button
-            onClick={() => router.push('/kau')}
-            className="w-full p-8 bg-white rounded-2xl shadow-lg border-2 border-gray-200 hover:border-emerald-500 hover:shadow-xl transition-all text-left group"
+          <Link
+            href="/kau"
+            className="block w-full p-8 bg-white rounded-2xl shadow-lg border-2 border-gray-200 hover:border-emerald-500 hover:shadow-xl transition-all text-left group"
           >
             <div className="flex items-center gap-4 mb-3">
               <div className="p-4 bg-emerald-100 rounded-xl group-hover:bg-emerald-200 transition-colors">
@@ -89,12 +93,12 @@ export default function Home() {
             <p className="text-gray-600 text-sm">
               食材の価格を記録して、みんなの相場に貢献しましょう
             </p>
-          </button>
+          </Link>
 
           {/* しるページ */}
-          <button
-            onClick={() => router.push('/shiru')}
-            className="w-full p-8 bg-white rounded-2xl shadow-lg border-2 border-gray-200 hover:border-emerald-500 hover:shadow-xl transition-all text-left group"
+          <Link
+            href="/shiru"
+            className="block w-full p-8 bg-white rounded-2xl shadow-lg border-2 border-gray-200 hover:border-emerald-500 hover:shadow-xl transition-all text-left group"
           >
             <div className="flex items-center gap-4 mb-3">
               <div className="p-4 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors">
@@ -108,7 +112,7 @@ export default function Home() {
             <p className="text-gray-600 text-sm">
               みんなの投稿から、地域の相場を確認できます
             </p>
-          </button>
+          </Link>
         </div>
       </div>
     </main>
