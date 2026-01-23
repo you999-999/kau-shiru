@@ -202,7 +202,7 @@ export async function getItemDetail(
   try {
     const result = await getItemStats(region)
     if (!result.success) {
-      return result
+      return { success: false, data: null, error: result.error }
     }
 
     const item = result.data.find(
