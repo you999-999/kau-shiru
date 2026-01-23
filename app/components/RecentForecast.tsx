@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { getRecentPosts, addReaction, removeReaction, getReactionCounts, getUserReactions } from '../actions'
 import { Egg, Milk, Beef, Carrot, Snowflake, Package, ThumbsUp } from 'lucide-react'
 import { useUserUuid } from '@/hooks/useUserUuid'
+import { formatRegionDisplay } from '../utils/regionDisplay'
 
 interface Post {
   id: string
@@ -14,6 +15,9 @@ interface Post {
   sentiment_level: number
   created_at: string
   comment?: string
+  region_big?: string
+  region_pref?: string
+  region_city?: string
 }
 
 const categoryIcons = {
@@ -35,9 +39,10 @@ const sentimentEmojis = ['😊', '🙂', '😐', '😕', '😞']
 
 interface RecentForecastProps {
   refreshKey?: number
+  region?: { big?: string; prefecture?: string; city?: string }
 }
 
-export function RecentForecast({ refreshKey = 0 }: RecentForecastProps) {
+export function RecentForecast({ refreshKey = 0, region }: RecentForecastProps) {
   const userUuid = useUserUuid()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,7 +52,7 @@ export function RecentForecast({ refreshKey = 0 }: RecentForecastProps) {
 
   const fetchPosts = async () => {
     setLoading(true)
-    const result = await getRecentPosts()
+    const result = await getRecentPosts(region)
     if (result.success && result.data) {
       const postsData = result.data as Post[]
       setPosts(postsData)
@@ -76,12 +81,13 @@ export function RecentForecast({ refreshKey = 0 }: RecentForecastProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // 初回のみ
 
-  // 投稿成功時（refreshKeyが変更された時）のみ更新
+  // 投稿成功時（refreshKeyが変更された時）または地域変更時のみ更新
   useEffect(() => {
     if (refreshKey > 0) {
       fetchPosts()
     }
-  }, [refreshKey, userUuid])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey, region])
 
   const handleReaction = async (postId: string) => {
     if (!userUuid || reactingIds.has(postId)) return
@@ -166,6 +172,11 @@ export function RecentForecast({ refreshKey = 0 }: RecentForecastProps) {
                     <span className="mx-2 text-gray-400">•</span>
                     <span className="text-xs text-gray-500">{sizeLabels[post.size_status as keyof typeof sizeLabels]}</span>
                   </div>
+                  {(post.region_big || post.region_pref || post.region_city) && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      {formatRegionDisplay(post)}
+                    </div>
+                  )}
                   {post.comment && (
                     <div className="mt-2 relative">
                       <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-xs text-gray-700 flex items-center justify-between gap-2">

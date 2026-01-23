@@ -4,9 +4,16 @@ import Link from 'next/link'
 
 export function Footer() {
   return (
-    <footer className="mt-12 pt-8 pb-6 border-t border-gray-200">
+    <footer className="mt-12 pt-8 pb-6 border-t border-gray-200 bg-gray-50">
       <div className="max-w-md mx-auto px-4">
         <div className="flex flex-wrap justify-center gap-4 text-sm">
+          <Link
+            href="/contact"
+            className="text-gray-600 hover:text-emerald-600 transition-colors"
+          >
+            お問い合わせ
+          </Link>
+          <span className="text-gray-300">|</span>
           <Link
             href="/terms"
             className="text-gray-600 hover:text-emerald-600 transition-colors"

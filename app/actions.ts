@@ -10,19 +10,53 @@ export interface PostData {
   sentiment_level: number
   user_uuid: string
   comment?: string
+  region_big: string
+  region_pref?: string
+  region_city?: string
 }
 
 export async function savePost(data: PostData) {
   try {
     const supabase = createServerClient()
+    
+    // カラムが存在しない場合でも動作するように、地域情報を条件付きで追加
+    const insertData: any = {
+      item_category: data.item_category,
+      price: data.price,
+      is_tax_included: data.is_tax_included,
+      size_status: data.size_status,
+      sentiment_level: data.sentiment_level,
+      user_uuid: data.user_uuid,
+      area_group: data.region_city || data.region_pref || data.region_big || '愛知西部',
+    }
+    
+    if (data.comment) {
+      insertData.comment = data.comment
+    }
+
+    // 地域カラムを追加（エラーが発生した場合は無視）
+    if (data.region_big) insertData.region_big = data.region_big
+    if (data.region_pref) insertData.region_pref = data.region_pref
+    if (data.region_city) insertData.region_city = data.region_city
+
     const { error } = await supabase
       .from('posts')
-      .insert({
-        ...data,
-        area_group: '愛知西部',
-      })
+      .insert(insertData)
 
-    if (error) throw error
+    if (error) {
+      // カラムが存在しないエラー（42703）の場合は地域情報を除外して再試行
+      if (error.code === '42703') {
+        delete insertData.region_big
+        delete insertData.region_pref
+        delete insertData.region_city
+        const { error: retryError } = await supabase
+          .from('posts')
+          .insert(insertData)
+        if (retryError) throw retryError
+      } else {
+        throw error
+      }
+    }
 
     return { success: true }
   } catch (error) {
@@ -31,17 +65,50 @@ export async function savePost(data: PostData) {
   }
 }
 
-export async function getRecentPosts() {
+export async function getRecentPosts(region?: { big?: string; prefecture?: string; city?: string }) {
   try {
     const supabase = createServerClient()
-    const { data, error } = await supabase
+    let query = supabase
       .from('posts')
       .select('*')
-      .eq('area_group', '愛知西部')
       .order('created_at', { ascending: false })
       .limit(3)
 
-    if (error) throw error
+    // 地域フィルタリング（優先順位：市町村 → 都道府県 → 地域）
+    // カラムが存在しない場合はarea_groupでフィルタリング（後方互換性）
+    try {
+      if (region?.city) {
+        query = query.eq('region_city', region.city)
+      } else if (region?.prefecture) {
+        query = query.eq('region_pref', region.prefecture)
+      } else if (region?.big) {
+        query = query.eq('region_big', region.big)
+      } else {
+        // デフォルト：中部（カラムが存在しない場合はarea_groupでフィルタ）
+        query = query.eq('area_group', '愛知西部')
+      }
+    } catch (e) {
+      // カラムが存在しない場合はarea_groupでフィルタリング
+      query = query.eq('area_group', '愛知西部')
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      // カラムが存在しないエラーの場合はarea_groupで再試行
+      if (error.code === '42703') {
+        const fallbackQuery = supabase
+          .from('posts')
+          .select('*')
+          .eq('area_group', '愛知西部')
+          .order('created_at', { ascending: false })
+          .limit(3)
+        const { data: fallbackData, error: fallbackError } = await fallbackQuery
+        if (fallbackError) throw fallbackError
+        return { success: true, data: fallbackData || [] }
+      }
+      throw error
+    }
 
     return { success: true, data: data || [] }
   } catch (error) {
@@ -123,7 +190,7 @@ export interface PriceTrend {
   avg_price: number
 }
 
-export async function getAreaStats() {
+export async function getAreaStats(region?: { big?: string; prefecture?: string; city?: string }) {
   try {
     const supabase = createServerClient()
     
@@ -131,13 +198,47 @@ export async function getAreaStats() {
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
     
-    const { data, error } = await supabase
+    let query = supabase
       .from('posts')
       .select('item_category, price, is_tax_included')
-      .eq('area_group', '愛知西部')
       .gte('created_at', sevenDaysAgo.toISOString())
 
-    if (error) throw error
+    // 地域フィルタリング（優先順位：市町村 → 都道府県 → 地域）
+    // カラムが存在しない場合はarea_groupでフィルタリング（後方互換性）
+    try {
+      if (region?.city) {
+        query = query.eq('region_city', region.city)
+      } else if (region?.prefecture) {
+        query = query.eq('region_pref', region.prefecture)
+      } else if (region?.big) {
+        query = query.eq('region_big', region.big)
+      } else {
+        // デフォルト：中部（カラムが存在しない場合はarea_groupでフィルタ）
+        query = query.eq('area_group', '愛知西部')
+      }
+    } catch (e) {
+      // カラムが存在しない場合はarea_groupでフィルタリング
+      query = query.eq('area_group', '愛知西部')
+    }
+
+    let result = await query
+    let data = result.data
+
+    if (result.error) {
+      // カラムが存在しないエラー（42703）の場合はarea_groupで再試行
+      if (result.error.code === '42703') {
+        const fallbackQuery = supabase
+          .from('posts')
+          .select('item_category, price, is_tax_included')
+          .eq('area_group', '愛知西部')
+          .gte('created_at', sevenDaysAgo.toISOString())
+        const fallbackResult = await fallbackQuery
+        if (fallbackResult.error) throw fallbackResult.error
+        data = fallbackResult.data
+      } else {
+        throw result.error
+      }
+    }
 
     // カテゴリごとに統計を計算
     const statsMap: Record<string, { prices: number[]; count: number }> = {}
@@ -180,7 +281,7 @@ export async function getAreaStats() {
 }
 
 // カテゴリごとの直近7日間の価格推移を取得
-export async function getPriceTrends() {
+export async function getPriceTrends(region?: { big?: string; prefecture?: string; city?: string }) {
   try {
     const supabase = createServerClient()
     
@@ -188,14 +289,44 @@ export async function getPriceTrends() {
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
     
-    const { data, error } = await supabase
+    let query = supabase
       .from('posts')
       .select('item_category, price, is_tax_included, created_at')
-      .eq('area_group', '愛知西部')
       .gte('created_at', sevenDaysAgo.toISOString())
       .order('created_at', { ascending: true })
 
-    if (error) throw error
+    // 地域フィルタリング（優先順位：市町村 → 都道府県 → 地域）
+    // カラムが存在しない場合はarea_groupでフィルタリング（後方互換性）
+    if (region?.city) {
+      query = query.eq('region_city', region.city)
+    } else if (region?.prefecture) {
+      query = query.eq('region_pref', region.prefecture)
+    } else if (region?.big) {
+      query = query.eq('region_big', region.big)
+    } else {
+      // デフォルト：中部（カラムが存在しない場合はarea_groupでフィルタ）
+      query = query.eq('area_group', '愛知西部')
+    }
+
+    let result = await query
+    let data = result.data
+
+    if (result.error) {
+      // カラムが存在しないエラー（42703）の場合はarea_groupで再試行
+      if (result.error.code === '42703') {
+        const fallbackQuery = supabase
+          .from('posts')
+          .select('item_category, price, is_tax_included, created_at')
+          .eq('area_group', '愛知西部')
+          .gte('created_at', sevenDaysAgo.toISOString())
+          .order('created_at', { ascending: true })
+        const fallbackResult = await fallbackQuery
+        if (fallbackResult.error) throw fallbackResult.error
+        data = fallbackResult.data
+      } else {
+        throw result.error
+      }
+    }
 
     // カテゴリごと、日付ごとにグループ化
     const trendsMap: Record<string, Record<string, number[]>> = {}
