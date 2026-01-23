@@ -6,9 +6,11 @@ import { getItemStats, ItemStats } from '../actions_new'
 import { RegionSelector, RegionData } from '../components/RegionSelector'
 import { DEFAULT_REGION } from '../data/regions'
 import { DEFAULT_ITEMS } from '../data/defaultItems'
+import { REFERENCE_PRICES } from '../data/referencePrices'
 import { AreaSelector } from '../components/AreaSelector'
 import Image from 'next/image'
-import { Star, Search } from 'lucide-react'
+import { Star, Search, AlertCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 const FAVORITES_STORAGE_KEY = 'kau_shiru_favorites'
 
@@ -91,12 +93,31 @@ export default function ShiruPage() {
   }).filter(Boolean) as ItemStats[]
 
   // 主要食材の統計を取得（単位は問わない）
+  // データがない場合は参考相場を表示
   const defaultItemStats = DEFAULT_ITEMS.map(defaultItem => {
     // 食材名が一致する最初の統計を取得（単位は問わない）
-    return itemStats.find(
-      stat => stat.item_name === defaultItem.name
+    const stat = itemStats.find(
+      s => s.item_name === defaultItem.name
     )
-  }).filter(Boolean) as ItemStats[]
+    
+    // データがない場合は参考相場を使用
+    if (!stat) {
+      const refPrice = REFERENCE_PRICES.find(r => r.item_name === defaultItem.name)
+      if (refPrice) {
+        return {
+          item_name: refPrice.item_name,
+          unit: refPrice.unit,
+          min_price: refPrice.min_price,
+          max_price: refPrice.max_price,
+          count: 0,
+          latest_date: new Date().toISOString(),
+          isReference: true, // 参考データであることを示すフラグ
+        } as any
+      }
+    }
+    
+    return stat
+  }).filter(Boolean) as (ItemStats & { isReference?: boolean })[]
 
   return (
     <main className="min-h-screen p-4 pb-8 bg-gray-50">
@@ -164,34 +185,66 @@ export default function ShiruPage() {
         )}
 
         {/* 主要食材 */}
-        {defaultItemStats.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-3">主要食材</h2>
-            <div className="space-y-3">
-              {defaultItemStats.map((stat) => {
-                const defaultItem = DEFAULT_ITEMS.find(item => item.name === stat.item_name)
-                const isFavorite = favorites.some(
-                  f => f.item_name === stat.item_name && f.unit === stat.unit
-                )
-                return (
-                  <ItemCard
-                    key={`${stat.item_name}-${stat.unit}`}
-                    stat={stat}
-                    emoji={defaultItem?.emoji}
-                    onToggleFavorite={() => {
-                      if (isFavorite) {
-                        removeFavorite(stat.item_name, stat.unit)
-                      } else {
-                        addFavorite(stat.item_name, stat.unit)
-                      }
-                    }}
-                    isFavorite={isFavorite}
-                  />
-                )
-              })}
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-3">主要食材</h2>
+          
+          {/* データがない場合のメッセージ */}
+          {itemStats.length === 0 && (
+            <div className="mb-4 p-4 bg-amber-50 border-2 border-amber-200 rounded-xl">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-amber-900 mb-1">
+                    まだ相場情報がありません
+                  </p>
+                  <p className="text-xs text-amber-700 mb-3">
+                    最初の投稿者になりましょう！あなたの投稿が、みんなの買い物に役立ちます。
+                  </p>
+                  <button
+                    onClick={() => router.push('/kau')}
+                    className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    最初の投稿をする →
+                  </button>
+                </div>
+              </div>
             </div>
+          )}
+
+          {/* 参考相場の注意書き */}
+          {itemStats.length === 0 && defaultItemStats.length > 0 && (
+            <div className="mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <p className="text-xs text-gray-600">
+                ※ 以下は全国平均の参考価格です。実際の相場は地域によって異なります。
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {defaultItemStats.map((stat) => {
+              const defaultItem = DEFAULT_ITEMS.find(item => item.name === stat.item_name)
+              const isFavorite = favorites.some(
+                f => f.item_name === stat.item_name && f.unit === stat.unit
+              )
+              return (
+                <ItemCard
+                  key={`${stat.item_name}-${stat.unit}`}
+                  stat={stat}
+                  emoji={defaultItem?.emoji}
+                  isReference={stat.isReference}
+                  onToggleFavorite={() => {
+                    if (isFavorite) {
+                      removeFavorite(stat.item_name, stat.unit)
+                    } else {
+                      addFavorite(stat.item_name, stat.unit)
+                    }
+                  }}
+                  isFavorite={isFavorite}
+                />
+              )
+            })}
           </div>
-        )}
+        </div>
 
         {/* 検索結果 */}
         {searchQuery && (
@@ -281,11 +334,13 @@ function ItemCard({
   emoji,
   onToggleFavorite,
   isFavorite,
+  isReference,
 }: {
   stat: ItemStats
   emoji?: string
   onToggleFavorite: () => void
   isFavorite: boolean
+  isReference?: boolean
 }) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -293,11 +348,18 @@ function ItemCard({
   }
 
   return (
-    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+    <div className={`bg-white rounded-xl p-4 border shadow-sm ${
+      isReference ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200'
+    }`}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           {emoji && <span className="text-2xl">{emoji}</span>}
-          <h3 className="font-bold text-gray-900">{stat.item_name}</h3>
+          <div>
+            <h3 className="font-bold text-gray-900">{stat.item_name}</h3>
+            {isReference && (
+              <span className="text-xs text-amber-600 font-medium">（参考相場）</span>
+            )}
+          </div>
         </div>
         <button
           onClick={onToggleFavorite}
@@ -326,8 +388,14 @@ function ItemCard({
       </div>
 
       <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>更新：{formatDate(stat.latest_date)}</span>
-        <span>（投稿 {stat.count}件）</span>
+        {isReference ? (
+          <span className="text-amber-600">全国平均（参考）</span>
+        ) : (
+          <>
+            <span>更新：{formatDate(stat.latest_date)}</span>
+            <span>（投稿 {stat.count}件）</span>
+          </>
+        )}
       </div>
     </div>
   )
