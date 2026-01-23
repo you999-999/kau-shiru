@@ -91,7 +91,11 @@ export function getPrefectures(regionBig: keyof typeof REGIONS): string[] {
 
 // 市町村一覧を取得
 export function getCities(regionBig: keyof typeof REGIONS, prefecture: string): string[] {
-  return REGIONS[regionBig]?.prefectures[prefecture] || []
+  const region = REGIONS[regionBig]
+  if (!region) return []
+  const prefectures = region.prefectures as Record<string, readonly string[]>
+  const cities = prefectures[prefecture]
+  return cities ? [...cities] : []
 }
 
 // 各地域の最大人口都道府県と最大人口都市のマッピング
