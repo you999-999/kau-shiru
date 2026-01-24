@@ -22,6 +22,13 @@ export default function KauPage() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
+  
+  const todayLabel = new Date().toLocaleDateString('ja-JP', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  })
   const userUuid = useUserUuid()
   const [itemName, setItemName] = useState<string>('')
   const [price, setPrice] = useState<string>('')
@@ -118,6 +125,7 @@ export default function KauPage() {
               </div>
             </div>
           <p className="text-sm text-gray-600">価格を記録して、みんなの相場に貢献</p>
+          <p className="text-xs text-gray-500 mt-1">{todayLabel}</p>
         </div>
 
         {/* これから買うメモ */}

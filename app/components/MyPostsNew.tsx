@@ -68,7 +68,10 @@ export function MyPostsNew({ userUuid, refreshKey = 0 }: MyPostsNewProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return `${date.getMonth() + 1}/${date.getDate()}`
+    const mmdd = `${date.getMonth() + 1}/${date.getDate()}`
+    const hh = String(date.getHours()).padStart(2, '0')
+    const min = String(date.getMinutes()).padStart(2, '0')
+    return `${mmdd} ${hh}:${min}`
   }
 
   if (!userUuid) {

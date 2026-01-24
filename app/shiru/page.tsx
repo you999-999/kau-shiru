@@ -28,6 +28,13 @@ export default function ShiruPage() {
   const [loading, setLoading] = useState(true)
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [searchQuery, setSearchQuery] = useState<string>('')
+  
+  const todayLabel = new Date().toLocaleDateString('ja-JP', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  })
 
   // ページ読み込み時にスクロール位置をリセット
   useEffect(() => {
@@ -142,7 +149,7 @@ export default function ShiruPage() {
                     width={24}
                     height={24}
                     className="object-contain"
-                    style={{ height: '1em', width: 'auto' }}
+                    style={{ height: '1em', width: 'auto', transform: 'scaleX(-1)' }}
                   />
                 </span>
               </h1>
@@ -152,6 +159,7 @@ export default function ShiruPage() {
             </div>
           </div>
           <p className="text-sm text-gray-600">みんなの投稿から相場を知る</p>
+          <p className="text-xs text-gray-500 mt-1">{todayLabel}</p>
         </div>
 
         {/* 今日のひとこと */}
@@ -356,7 +364,10 @@ function ItemCard({
 }) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return `${date.getMonth() + 1}/${date.getDate()}`
+    const mmdd = `${date.getMonth() + 1}/${date.getDate()}`
+    const hh = String(date.getHours()).padStart(2, '0')
+    const min = String(date.getMinutes()).padStart(2, '0')
+    return `${mmdd} ${hh}:${min}`
   }
 
   return (
