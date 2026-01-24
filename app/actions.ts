@@ -507,7 +507,7 @@ export async function getTodayQuote(region?: { big?: string; prefecture?: string
     const supabase = createServerClient()
     
     // まず、地域カラムを含むSELECTを試行
-    let query = supabase
+    let query: any = supabase
       .from('daily_quotes')
       .select('id, content, item_name, price, quantity, unit, created_at, region_big, region_pref, region_city')
       .gte('created_at', todayStartUTC.toISOString())
@@ -527,13 +527,13 @@ export async function getTodayQuote(region?: { big?: string; prefecture?: string
     // カラムが存在しないエラー（PGRST204）の場合は、地域カラムなしで再試行
     if (error && (error.code === 'PGRST204' || error.code === '42703' || error.message?.includes('column') || error.message?.includes('Could not find'))) {
       // 地域カラムなしで再試行
-      query = supabase
+      const retryQuery = supabase
         .from('daily_quotes')
         .select('id, content, item_name, price, quantity, unit, created_at')
         .gte('created_at', todayStartUTC.toISOString())
         .lt('created_at', tomorrowStartUTC.toISOString())
       
-      const retryResult = await query
+      const retryResult = await retryQuery
       if (retryResult.error) {
         // テーブルが存在しない場合（PGRST205エラー）は静かに処理
         if (retryResult.error.code === 'PGRST205' || retryResult.error.message?.includes('Could not find the table')) {
