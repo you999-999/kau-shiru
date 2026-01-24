@@ -31,6 +31,74 @@ export async function savePostNew(data: PostDataNew) {
           'Supabaseの環境変数が未設定です（VercelのProject Settings → Environment Variables を確認してください）。',
       }
     }
+
+    // --- 入力バリデーション（最小） ---
+    const itemName = (data.item_name ?? '').trim()
+    if (!itemName) {
+      return { success: false, error: '食材名を入力してください。' }
+    }
+    if (itemName.length > 50) {
+      return { success: false, error: '食材名が長すぎます（最大50文字）。' }
+    }
+    if (!Number.isFinite(data.price) || data.price <= 0) {
+      return { success: false, error: '価格が不正です。' }
+    }
+    if (data.price > 100000) {
+      return { success: false, error: '価格が高すぎます（上限100,000円）。' }
+    }
+    if (data.quantity !== undefined && data.quantity !== null) {
+      if (!Number.isFinite(data.quantity) || data.quantity < 0 || data.quantity > 9999) {
+        return { success: false, error: '量が不正です。' }
+      }
+    }
+    if (data.comment && data.comment.trim().length > 20) {
+      return { success: false, error: 'ひとことは最大20文字です。' }
+    }
+
+    // --- 連投/スパム対策（最小） ---
+    // 1) 同一ユーザーの短時間連投を制限（例：10分で最大5件）
+    // 2) 同一内容の重複投稿（連打）を制限（例：5分以内の同一内容）
+    try {
+      const now = Date.now()
+      const tenMinAgoISO = new Date(now - 10 * 60 * 1000).toISOString()
+      const fiveMinAgoISO = new Date(now - 5 * 60 * 1000).toISOString()
+
+      const { count: recentCount, error: countError } = await supabase
+        .from('posts')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_uuid', data.user_uuid)
+        .gte('created_at', tenMinAgoISO)
+
+      if (!countError && typeof recentCount === 'number' && recentCount >= 5) {
+        return {
+          success: false,
+          error: '投稿が短時間に多すぎます。少し時間をおいてから再度お試しください。',
+        }
+      }
+
+      const { data: dupData, error: dupError } = await supabase
+        .from('posts')
+        .select('id')
+        .eq('user_uuid', data.user_uuid)
+        .eq('item_name', data.item_name)
+        .eq('price', data.price)
+        .gte('created_at', fiveMinAgoISO)
+        .limit(1)
+
+      if (
+        !dupError &&
+        Array.isArray(dupData) &&
+        dupData.length > 0
+      ) {
+        return {
+          success: false,
+          error: '同じ内容の投稿が連続しています。反映済みの可能性があるので一覧を確認してください。',
+        }
+      }
+    } catch (antiSpamErr) {
+      // ここで落とすと投稿できなくなるため、警告だけ
+      console.warn('Anti-spam check failed (ignored):', antiSpamErr)
+    }
     
     // 新スキーマのカテゴリを旧スキーマのitem_categoryにマッピング
     // 旧スキーマのCHECK制約: ('卵', '牛乳', '肉', '野菜', '冷凍食品', 'その他')
@@ -52,7 +120,7 @@ export async function savePostNew(data: PostDataNew) {
     }
 
     const insertData: any = {
-      item_name: data.item_name,
+      item_name: itemName,
       price: data.price,
       category_new: data.category,
       // 後方互換性のためitem_categoryも設定（NOT NULL制約対応）
