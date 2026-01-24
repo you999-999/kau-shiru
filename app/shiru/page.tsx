@@ -155,7 +155,7 @@ export default function ShiruPage() {
         </div>
 
         {/* 今日のひとこと */}
-        <DailyQuote />
+        <DailyQuote region={selectedRegion} />
 
         {/* 地域選択 */}
         <div className="mb-6 p-4 bg-white rounded-2xl shadow-sm border border-gray-200">

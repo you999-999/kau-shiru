@@ -487,7 +487,7 @@ export interface DailyQuote {
   created_at: string
 }
 
-export async function getTodayQuote(): Promise<{ success: boolean; data: DailyQuote | null; error?: string }> {
+export async function getTodayQuote(region?: { big?: string; prefecture?: string; city?: string }): Promise<{ success: boolean; data: DailyQuote | null; error?: string }> {
   try {
     // JST（日本標準時）で今日の00:00と明日の00:00を計算
     const now = new Date()
@@ -506,16 +506,45 @@ export async function getTodayQuote(): Promise<{ success: boolean; data: DailyQu
 
     const supabase = createServerClient()
     
-    // 当日のデータを全件取得してからランダムで1件選択
-    const { data, error } = await supabase
+    // まず、地域カラムを含むSELECTを試行
+    let query = supabase
       .from('daily_quotes')
-      .select('id, content, item_name, price, quantity, unit, created_at')
+      .select('id, content, item_name, price, quantity, unit, created_at, region_big, region_pref, region_city')
       .gte('created_at', todayStartUTC.toISOString())
       .lt('created_at', tomorrowStartUTC.toISOString())
+    
+    // 地域フィルタリング（優先順位：市町村 → 都道府県 → 地域）
+    if (region?.city) {
+      query = query.eq('region_city', region.city)
+    } else if (region?.prefecture) {
+      query = query.eq('region_pref', region.prefecture)
+    } else if (region?.big) {
+      query = query.eq('region_big', region.big)
+    }
+    
+    let { data, error } = await query
 
-    // テーブルが存在しない場合（PGRST205エラー）は静かに処理
-    if (error) {
-      // テーブルが存在しない場合は成功として扱い、データなしを返す
+    // カラムが存在しないエラー（PGRST204）の場合は、地域カラムなしで再試行
+    if (error && (error.code === 'PGRST204' || error.code === '42703' || error.message?.includes('column') || error.message?.includes('Could not find'))) {
+      // 地域カラムなしで再試行
+      query = supabase
+        .from('daily_quotes')
+        .select('id, content, item_name, price, quantity, unit, created_at')
+        .gte('created_at', todayStartUTC.toISOString())
+        .lt('created_at', tomorrowStartUTC.toISOString())
+      
+      const retryResult = await query
+      if (retryResult.error) {
+        // テーブルが存在しない場合（PGRST205エラー）は静かに処理
+        if (retryResult.error.code === 'PGRST205' || retryResult.error.message?.includes('Could not find the table')) {
+          return { success: true, data: null }
+        }
+        throw retryResult.error
+      }
+      data = retryResult.data
+      error = null
+    } else if (error) {
+      // テーブルが存在しない場合（PGRST205エラー）は静かに処理
       if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
         return { success: true, data: null }
       }

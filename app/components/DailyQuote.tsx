@@ -3,16 +3,53 @@
 import { useEffect, useState } from 'react'
 import { getTodayQuote } from '../actions'
 import type { DailyQuote } from '../actions'
+import { DEFAULT_REGION } from '../data/regions'
 
-export function DailyQuote() {
+interface DailyQuoteProps {
+  region?: {
+    big?: string
+    prefecture?: string
+    city?: string
+  }
+}
+
+export function DailyQuote({ region }: DailyQuoteProps) {
   const [quote, setQuote] = useState<DailyQuote | null>(null)
   const [loading, setLoading] = useState(true)
+  const [currentRegion, setCurrentRegion] = useState<{ big?: string; prefecture?: string; city?: string }>(region || DEFAULT_REGION)
+
+  // 地域情報をlocalStorageから取得（propsがない場合）
+  useEffect(() => {
+    if (region) {
+      setCurrentRegion(region)
+      return
+    }
+
+    if (typeof window === 'undefined') return
+
+    try {
+      const stored = localStorage.getItem('kau_shiru_selected_region')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setCurrentRegion({
+          big: parsed.big || DEFAULT_REGION.big,
+          prefecture: parsed.prefecture || DEFAULT_REGION.prefecture,
+          city: parsed.city || DEFAULT_REGION.city,
+        })
+      } else {
+        setCurrentRegion(DEFAULT_REGION)
+      }
+    } catch (e) {
+      console.error('Failed to parse region from localStorage:', e)
+      setCurrentRegion(DEFAULT_REGION)
+    }
+  }, [region])
 
   useEffect(() => {
     const fetchQuote = async () => {
       try {
         setLoading(true)
-        const result = await getTodayQuote()
+        const result = await getTodayQuote(currentRegion)
         
         if (result.success && result.data) {
           setQuote(result.data)
@@ -29,7 +66,7 @@ export function DailyQuote() {
     }
 
     fetchQuote()
-  }, [])
+  }, [currentRegion])
 
   // ローディング中は何も表示しない
   if (loading) {

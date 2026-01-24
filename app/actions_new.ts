@@ -108,6 +108,7 @@ export async function savePostNew(data: PostDataNew) {
               content: commentText,
               item_name: data.item_name,
               price: data.price,
+              region_big: data.region_big,
             }
             // 量と単位がある場合のみ追加
             if (data.quantity !== undefined && data.quantity !== null) {
@@ -116,12 +117,46 @@ export async function savePostNew(data: PostDataNew) {
             if (data.unit) {
               quoteData.unit = data.unit
             }
+            // 地域情報がある場合のみ追加
+            if (data.region_pref) {
+              quoteData.region_pref = data.region_pref
+            }
+            if (data.region_city) {
+              quoteData.region_city = data.region_city
+            }
             
             const { error: quoteError } = await supabase
               .from('daily_quotes')
               .insert(quoteData)
+            
             if (quoteError) {
-              console.warn('Failed to save daily quote:', quoteError)
+              // カラムが存在しないエラー（PGRST204）の場合は、地域カラムなしで再試行
+              if (quoteError.code === 'PGRST204' || quoteError.code === '42703' || quoteError.message?.includes('column') || quoteError.message?.includes('Could not find')) {
+                const retryQuoteData: any = {
+                  content: commentText,
+                  item_name: data.item_name,
+                  price: data.price,
+                }
+                // 量と単位がある場合のみ追加
+                if (data.quantity !== undefined && data.quantity !== null) {
+                  retryQuoteData.quantity = data.quantity
+                }
+                if (data.unit) {
+                  retryQuoteData.unit = data.unit
+                }
+                
+                const { error: retryError } = await supabase
+                  .from('daily_quotes')
+                  .insert(retryQuoteData)
+                
+                if (retryError) {
+                  console.warn('Failed to save daily quote (retry):', retryError)
+                } else {
+                  console.log('Daily quote saved successfully (without region columns)')
+                }
+              } else {
+                console.warn('Failed to save daily quote:', quoteError)
+              }
             } else {
               console.log('Daily quote saved successfully')
             }
@@ -170,6 +205,7 @@ export async function savePostNew(data: PostDataNew) {
             content: commentText,
             item_name: data.item_name,
             price: data.price,
+            region_big: data.region_big,
           }
           // 量と単位がある場合のみ追加
           if (data.quantity !== undefined && data.quantity !== null) {
@@ -178,14 +214,48 @@ export async function savePostNew(data: PostDataNew) {
           if (data.unit) {
             quoteData.unit = data.unit
           }
+          // 地域情報がある場合のみ追加
+          if (data.region_pref) {
+            quoteData.region_pref = data.region_pref
+          }
+          if (data.region_city) {
+            quoteData.region_city = data.region_city
+          }
           
           const { error: quoteError } = await supabase
             .from('daily_quotes')
             .insert(quoteData)
           
           if (quoteError) {
-            // daily_quotesテーブルが存在しない場合などはエラーを無視
-            console.warn('Failed to save daily quote:', quoteError)
+            // カラムが存在しないエラー（PGRST204）の場合は、地域カラムなしで再試行
+            if (quoteError.code === 'PGRST204' || quoteError.code === '42703' || quoteError.message?.includes('column') || quoteError.message?.includes('Could not find')) {
+              const retryQuoteData: any = {
+                content: commentText,
+                item_name: data.item_name,
+                price: data.price,
+              }
+              // 量と単位がある場合のみ追加
+              if (data.quantity !== undefined && data.quantity !== null) {
+                retryQuoteData.quantity = data.quantity
+              }
+              if (data.unit) {
+                retryQuoteData.unit = data.unit
+              }
+              
+              const { error: retryError } = await supabase
+                .from('daily_quotes')
+                .insert(retryQuoteData)
+              
+              if (retryError) {
+                // daily_quotesテーブルが存在しない場合などはエラーを無視
+                console.warn('Failed to save daily quote (retry):', retryError)
+              } else {
+                console.log('Daily quote saved successfully (without region columns)')
+              }
+            } else {
+              // その他のエラーも無視（テーブルが存在しない場合など）
+              console.warn('Failed to save daily quote:', quoteError)
+            }
           } else {
             console.log('Daily quote saved successfully')
           }
