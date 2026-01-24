@@ -20,7 +20,17 @@ export interface PostDataNew {
 // 新しい投稿を保存
 export async function savePostNew(data: PostDataNew) {
   try {
-    const supabase = createServerClient()
+    let supabase
+    try {
+      supabase = createServerClient()
+    } catch (e) {
+      console.error('Supabase client init failed in savePostNew:', e)
+      return {
+        success: false,
+        error:
+          'Supabaseの環境変数が未設定です（VercelのProject Settings → Environment Variables を確認してください）。',
+      }
+    }
     
     // 新スキーマのカテゴリを旧スキーマのitem_categoryにマッピング
     // 旧スキーマのCHECK制約: ('卵', '牛乳', '肉', '野菜', '冷凍食品', 'その他')
@@ -289,7 +299,18 @@ export async function getItemStats(
   region?: { big?: string; prefecture?: string; city?: string }
 ): Promise<{ success: boolean; data: ItemStats[]; error?: string }> {
   try {
-    const supabase = createServerClient()
+    let supabase
+    try {
+      supabase = createServerClient()
+    } catch (e) {
+      console.error('Supabase client init failed in getItemStats:', e)
+      return {
+        success: false,
+        data: [],
+        error:
+          'Supabaseの環境変数が未設定です（VercelのProject Settings → Environment Variables を確認してください）。',
+      }
+    }
     
     // 直近30日間のデータを取得
     const thirtyDaysAgo = new Date()
@@ -436,7 +457,18 @@ export async function getMyPostsNew(userUuid: string): Promise<{ success: boolea
       return { success: true, data: [] }
     }
 
-    const supabase = createServerClient()
+    let supabase
+    try {
+      supabase = createServerClient()
+    } catch (e) {
+      console.error('Supabase client init failed in getMyPostsNew:', e)
+      return {
+        success: false,
+        data: [],
+        error:
+          'Supabaseの環境変数が未設定です（VercelのProject Settings → Environment Variables を確認してください）。',
+      }
+    }
     const { data, error } = await supabase
       .from('posts')
       .select('id, item_name, price, category_new, is_tax_included, quantity, unit, comment, region_big, region_pref, region_city, created_at, user_uuid')
@@ -467,7 +499,17 @@ export async function deletePostNew(postId: string, userUuid: string): Promise<{
       return { success: false, error: 'User UUID is required' }
     }
 
-    const supabase = createServerClient()
+    let supabase
+    try {
+      supabase = createServerClient()
+    } catch (e) {
+      console.error('Supabase client init failed in deletePostNew:', e)
+      return {
+        success: false,
+        error:
+          'Supabaseの環境変数が未設定です（VercelのProject Settings → Environment Variables を確認してください）。',
+      }
+    }
     
     // まず、投稿がこのユーザーのものか確認
     const { data: post, error: fetchError } = await supabase
