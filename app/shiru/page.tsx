@@ -10,6 +10,7 @@ import { DEFAULT_REGION } from '../data/regions'
 import { DEFAULT_ITEMS } from '../data/defaultItems'
 import { REFERENCE_PRICES } from '../data/referencePrices'
 import { AreaSelector } from '../components/AreaSelector'
+import { DailyQuote } from '../components/DailyQuote'
 import Image from 'next/image'
 import { Star, Search, AlertCircle } from 'lucide-react'
 
@@ -130,11 +131,11 @@ export default function ShiruPage() {
       <div className="max-w-md mx-auto">
         {/* ヘッダー */}
         <div className="mb-6 pt-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2 whitespace-nowrap">
                 しる
-                <span className="inline-flex items-center" style={{ height: '1em', lineHeight: '1' }}>
+                <span className="inline-flex items-center flex-shrink-0" style={{ height: '1em', lineHeight: '1' }}>
                   <Image
                     src="/gazou/kausiru.png"
                     alt="かうしる"
@@ -146,10 +147,15 @@ export default function ShiruPage() {
                 </span>
               </h1>
             </div>
-            <AreaSelector region={selectedRegion} />
+            <div className="flex-shrink-0">
+              <AreaSelector region={selectedRegion} />
+            </div>
           </div>
           <p className="text-sm text-gray-600">みんなの投稿から相場を知る</p>
         </div>
+
+        {/* 今日のひとこと */}
+        <DailyQuote />
 
         {/* 地域選択 */}
         <div className="mb-6 p-4 bg-white rounded-2xl shadow-sm border border-gray-200">

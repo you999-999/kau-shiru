@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingCart, Eye, BookOpen, TrendingUp } from 'lucide-react'
 import { OnboardingModal } from './components/OnboardingModal'
+import { DailyQuote } from './components/DailyQuote'
 
 export default function Home() {
   // ページ読み込み時にスクロール位置をリセット
@@ -18,10 +19,10 @@ export default function Home() {
       <div className="max-w-md mx-auto w-full">
         {/* ヘッダー */}
         <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <h1 className="text-5xl font-bold text-gray-900 flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 flex items-center gap-1 sm:gap-2 whitespace-nowrap">
               かうしる
-              <span className="inline-flex items-center" style={{ height: '1em', lineHeight: '1' }}>
+              <span className="inline-flex items-center flex-shrink-0" style={{ height: '1em', lineHeight: '1' }}>
                 <Image
                   src="/gazou/kausiru.png"
                   alt="かうしる"
@@ -36,6 +37,9 @@ export default function Home() {
           <p className="text-gray-600 text-lg font-medium">買い物にお得感と楽しさを！</p>
           <p className="text-gray-500 text-sm mt-1">地域の知恵が集まる物価メモ</p>
         </div>
+
+        {/* 今日のひとこと */}
+        <DailyQuote />
 
         {/* 具体的なベネフィット */}
         <div className="mb-8 p-6 bg-white rounded-2xl shadow-sm border border-gray-200">
@@ -79,18 +83,18 @@ export default function Home() {
           {/* かうページ */}
           <Link
             href="/kau"
-            className="block w-full p-8 bg-white rounded-2xl shadow-lg border-2 border-gray-200 hover:border-emerald-500 hover:shadow-xl transition-all text-left group"
+            className="block w-full p-6 sm:p-8 bg-white rounded-2xl shadow-lg border-2 border-gray-200 hover:border-emerald-500 hover:shadow-xl transition-all text-left group"
           >
-            <div className="flex items-center gap-4 mb-3">
-              <div className="p-4 bg-emerald-100 rounded-xl group-hover:bg-emerald-200 transition-colors">
-                <ShoppingCart className="w-8 h-8 text-emerald-600" />
+            <div className="flex items-center gap-3 sm:gap-4 mb-3">
+              <div className="p-3 sm:p-4 bg-emerald-100 rounded-xl group-hover:bg-emerald-200 transition-colors flex-shrink-0">
+                <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-600" />
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">かう</h2>
-                <p className="text-sm text-gray-500">価格を記録する</p>
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">かう</h2>
+                <p className="text-xs sm:text-sm text-gray-500">価格を記録する</p>
               </div>
             </div>
-            <p className="text-gray-600 text-sm">
+            <p className="text-gray-600 text-xs sm:text-sm">
               食材の価格を記録して、みんなの相場に貢献しましょう
             </p>
           </Link>
@@ -98,18 +102,18 @@ export default function Home() {
           {/* しるページ */}
           <Link
             href="/shiru"
-            className="block w-full p-8 bg-white rounded-2xl shadow-lg border-2 border-gray-200 hover:border-emerald-500 hover:shadow-xl transition-all text-left group"
+            className="block w-full p-6 sm:p-8 bg-white rounded-2xl shadow-lg border-2 border-gray-200 hover:border-emerald-500 hover:shadow-xl transition-all text-left group"
           >
-            <div className="flex items-center gap-4 mb-3">
-              <div className="p-4 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors">
-                <Eye className="w-8 h-8 text-blue-600" />
+            <div className="flex items-center gap-3 sm:gap-4 mb-3">
+              <div className="p-3 sm:p-4 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors flex-shrink-0">
+                <Eye className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">しる</h2>
-                <p className="text-sm text-gray-500">相場を知る</p>
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">しる</h2>
+                <p className="text-xs sm:text-sm text-gray-500">相場を知る</p>
               </div>
             </div>
-            <p className="text-gray-600 text-sm">
+            <p className="text-gray-600 text-xs sm:text-sm">
               みんなの投稿から、地域の相場を確認できます
             </p>
           </Link>

@@ -65,10 +65,10 @@ export function ShoppingMemo() {
   const checkedCount = items.filter(item => item.checked).length
 
   return (
-    <div className="mb-6 p-6 bg-white rounded-2xl shadow-sm border border-gray-200">
+    <div className="mb-6 p-4 sm:p-6 bg-white rounded-2xl shadow-sm border border-gray-200">
       <div className="flex items-center gap-2 mb-4">
-        <ShoppingCart className="w-5 h-5 text-emerald-600" />
-        <h2 className="text-lg font-bold text-gray-800">これから買うメモ</h2>
+        <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
+        <h2 className="text-base sm:text-lg font-bold text-gray-800">これから買うメモ</h2>
       </div>
 
       {/* 入力欄 */}
@@ -83,13 +83,13 @@ export function ShoppingMemo() {
             }
           }}
           placeholder="例：キャベツ、鶏もも..."
-          className="flex-1 p-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 text-sm"
+          className="flex-1 p-2.5 sm:p-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 text-sm sm:text-base"
         />
         <button
           onClick={handleAddItem}
-          className="px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors"
+          className="px-3 sm:px-4 py-2.5 sm:py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors flex-shrink-0"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </div>
 

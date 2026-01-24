@@ -39,7 +39,11 @@ export function MyPostsNew({ userUuid, refreshKey = 0 }: MyPostsNewProps) {
 
   useEffect(() => {
     if (refreshKey > 0 && userUuid) {
-      loadData()
+      // 少し待ってから取得（DBへの保存が完了するのを待つ）
+      const timer = setTimeout(() => {
+        loadData()
+      }, 500)
+      return () => clearTimeout(timer)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey, userUuid])
@@ -96,7 +100,7 @@ export function MyPostsNew({ userUuid, refreshKey = 0 }: MyPostsNewProps) {
         {posts.map((post) => (
           <div
             key={post.id}
-            className="p-4 bg-gray-50 rounded-xl border border-gray-200"
+            className="p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-200"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
@@ -107,7 +111,10 @@ export function MyPostsNew({ userUuid, refreshKey = 0 }: MyPostsNewProps) {
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                  <span className="text-lg font-bold text-gray-900">{post.price.toLocaleString()}円</span>
+                  <span className="text-base sm:text-lg font-bold text-gray-900">{post.price.toLocaleString()}円</span>
+                  {!post.is_tax_included && (
+                    <span className="text-xs text-gray-500">(税込)</span>
+                  )}
                   {post.quantity && post.unit && (
                     <span className="text-xs">
                       {post.quantity}{post.unit}
@@ -119,6 +126,11 @@ export function MyPostsNew({ userUuid, refreshKey = 0 }: MyPostsNewProps) {
                     </span>
                   )}
                 </div>
+                {post.comment && (
+                  <div className="mt-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <p className="text-xs text-gray-700">{post.comment}</p>
+                  </div>
+                )}
                 <div className="flex items-center gap-3 text-xs text-gray-500 mt-2">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />

@@ -7,8 +7,10 @@ export interface PostDataNew {
   item_name: string // 食材名（必須）
   price: number // 価格（必須）
   category: '肉' | '魚' | '野菜' | '冷凍食品' | 'その他' // カテゴリ（必須）
+  is_tax_included: boolean // 税込みかどうか（必須）
   quantity?: number // 量（任意）
   unit?: string // 単位（任意）
+  comment?: string // 一言（任意、最大20文字）
   region_big: string // 地域（必須）
   region_pref?: string // 都道府県（任意）
   region_city?: string // 市町村（任意）
@@ -20,10 +22,36 @@ export async function savePostNew(data: PostDataNew) {
   try {
     const supabase = createServerClient()
     
+    // 新スキーマのカテゴリを旧スキーマのitem_categoryにマッピング
+    // 旧スキーマのCHECK制約: ('卵', '牛乳', '肉', '野菜', '冷凍食品', 'その他')
+    const mapCategoryToOldSchema = (category: string): string => {
+      switch (category) {
+        case '肉':
+          return '肉'
+        case '野菜':
+          return '野菜'
+        case '冷凍食品':
+          return '冷凍食品'
+        case '魚':
+          return 'その他' // '魚'は旧スキーマにないため'その他'にマッピング
+        case 'その他':
+          return 'その他'
+        default:
+          return 'その他'
+      }
+    }
+
     const insertData: any = {
       item_name: data.item_name,
       price: data.price,
       category_new: data.category,
+      // 後方互換性のためitem_categoryも設定（NOT NULL制約対応）
+      // 旧スキーマのCHECK制約に合わせてマッピング
+      item_category: mapCategoryToOldSchema(data.category),
+      is_tax_included: data.is_tax_included,
+      // 後方互換性のためsize_statusとsentiment_levelも設定（NOT NULL制約対応）
+      size_status: 'normal', // デフォルト値
+      sentiment_level: 3, // デフォルト値（中間）
       user_uuid: data.user_uuid,
       region_big: data.region_big,
       area_group: data.region_city || data.region_pref || data.region_big || '中部',
@@ -42,14 +70,70 @@ export async function savePostNew(data: PostDataNew) {
     if (data.region_city) {
       insertData.region_city = data.region_city
     }
+    // commentカラムが存在する場合のみ追加（PGRST204エラーを防ぐ）
+    if (data.comment && data.comment.trim()) {
+      // 最大20文字に制限
+      insertData.comment = data.comment.trim().substring(0, 20)
+    }
 
-    const { error } = await supabase
+    const { data: insertedData, error } = await supabase
       .from('posts')
       .insert(insertData)
+      .select()
+      .single()
 
     if (error) {
+      // commentカラムが存在しないエラー（PGRST204）の場合はcommentを除外して再試行
+      if (error.code === 'PGRST204' && error.message?.includes('comment')) {
+        console.warn('comment column not found, retrying without comment')
+        const retryData = { ...insertData }
+        delete retryData.comment
+        const { data: retryInsertedData, error: retryError } = await supabase
+          .from('posts')
+          .insert(retryData)
+          .select()
+          .single()
+        if (retryError) {
+          console.error('Retry insert error:', retryError)
+          throw retryError
+        }
+        if (retryInsertedData) {
+          console.log('Post saved successfully (without comment):', retryInsertedData)
+        }
+        // commentが入力されていた場合はdaily_quotesに保存を試みる（商品情報も一緒に）
+        if (data.comment && data.comment.trim()) {
+          try {
+            const commentText = data.comment.trim().substring(0, 20)
+            const quoteData: any = {
+              content: commentText,
+              item_name: data.item_name,
+              price: data.price,
+            }
+            // 量と単位がある場合のみ追加
+            if (data.quantity !== undefined && data.quantity !== null) {
+              quoteData.quantity = data.quantity
+            }
+            if (data.unit) {
+              quoteData.unit = data.unit
+            }
+            
+            const { error: quoteError } = await supabase
+              .from('daily_quotes')
+              .insert(quoteData)
+            if (quoteError) {
+              console.warn('Failed to save daily quote:', quoteError)
+            } else {
+              console.log('Daily quote saved successfully')
+            }
+          } catch (quoteErr) {
+            console.warn('Error saving daily quote:', quoteErr)
+          }
+        }
+        return { success: true }
+      }
       // カラムが存在しないエラー（42703）の場合は後方互換性のため旧カラムで再試行
       if (error.code === '42703') {
+        console.warn('New schema columns not found, using fallback schema')
         // 旧スキーマに合わせて変換
         const fallbackData: any = {
           item_category: data.category === '肉' ? '肉' : data.category === '野菜' ? '野菜' : 'その他',
@@ -63,12 +147,54 @@ export async function savePostNew(data: PostDataNew) {
         const { error: retryError } = await supabase
           .from('posts')
           .insert(fallbackData)
-        if (retryError) throw retryError
+        if (retryError) {
+          console.error('Fallback insert error:', retryError)
+          throw retryError
+        }
+        console.log('Post saved successfully (fallback schema)')
+        return { success: true }
       } else {
+        console.error('Insert error:', error)
         throw error
       }
     }
 
+    if (insertedData) {
+      console.log('Post saved successfully:', insertedData)
+      
+      // 一言が入力されている場合、daily_quotesテーブルにも保存（商品情報も一緒に）
+      if (data.comment && data.comment.trim()) {
+        try {
+          const commentText = data.comment.trim().substring(0, 20)
+          const quoteData: any = {
+            content: commentText,
+            item_name: data.item_name,
+            price: data.price,
+          }
+          // 量と単位がある場合のみ追加
+          if (data.quantity !== undefined && data.quantity !== null) {
+            quoteData.quantity = data.quantity
+          }
+          if (data.unit) {
+            quoteData.unit = data.unit
+          }
+          
+          const { error: quoteError } = await supabase
+            .from('daily_quotes')
+            .insert(quoteData)
+          
+          if (quoteError) {
+            // daily_quotesテーブルが存在しない場合などはエラーを無視
+            console.warn('Failed to save daily quote:', quoteError)
+          } else {
+            console.log('Daily quote saved successfully')
+          }
+        } catch (quoteErr) {
+          // エラーを無視（テーブルが存在しない場合など）
+          console.warn('Error saving daily quote:', quoteErr)
+        }
+      }
+    }
     return { success: true }
   } catch (error) {
     console.error('Error saving post:', error)
@@ -222,8 +348,10 @@ export interface PostNew {
   item_name: string
   price: number
   category_new: string
+  is_tax_included: boolean
   quantity: number | null
   unit: string | null
+  comment: string | null
   region_big: string | null
   region_pref: string | null
   region_city: string | null
@@ -241,7 +369,7 @@ export async function getMyPostsNew(userUuid: string): Promise<{ success: boolea
     const supabase = createServerClient()
     const { data, error } = await supabase
       .from('posts')
-      .select('id, item_name, price, category_new, quantity, unit, region_big, region_pref, region_city, created_at, user_uuid')
+      .select('id, item_name, price, category_new, is_tax_included, quantity, unit, comment, region_big, region_pref, region_city, created_at, user_uuid')
       .eq('user_uuid', userUuid)
       .not('item_name', 'is', null) // 新スキーマのデータのみ
       .order('created_at', { ascending: false })

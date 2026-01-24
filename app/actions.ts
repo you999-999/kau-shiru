@@ -480,6 +480,10 @@ export async function getUserReactions(userUuid: string, postIds: string[]) {
 export interface DailyQuote {
   id: string
   content: string
+  item_name?: string | null
+  price?: number | null
+  quantity?: number | null
+  unit?: string | null
   created_at: string
 }
 
@@ -505,7 +509,7 @@ export async function getTodayQuote(): Promise<{ success: boolean; data: DailyQu
     // 当日のデータを全件取得してからランダムで1件選択
     const { data, error } = await supabase
       .from('daily_quotes')
-      .select('id, content, created_at')
+      .select('id, content, item_name, price, quantity, unit, created_at')
       .gte('created_at', todayStartUTC.toISOString())
       .lt('created_at', tomorrowStartUTC.toISOString())
 
