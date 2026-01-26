@@ -11,6 +11,7 @@ import { DEFAULT_ITEMS } from '../data/defaultItems'
 import { REFERENCE_PRICES } from '../data/referencePrices'
 import { AreaSelector } from '../components/AreaSelector'
 import { DailyQuote } from '../components/DailyQuote'
+import { BuyLogsDisplay } from '../components/BuyLogsDisplay'
 import Image from 'next/image'
 import { Star, Search, AlertCircle } from 'lucide-react'
 
@@ -164,6 +165,9 @@ export default function ShiruPage() {
 
         {/* 今日のひとこと */}
         <DailyQuote region={selectedRegion} />
+
+        {/* みんなの買い物（新機能） */}
+        <BuyLogsDisplay />
 
         {/* 地域選択 */}
         <div className="mb-6 p-4 bg-white rounded-2xl shadow-sm border border-gray-200">

@@ -11,6 +11,8 @@ import { getUnitsForCategory } from '../data/units'
 import { AreaSelector } from '../components/AreaSelector'
 import { ShoppingMemo } from '../components/ShoppingMemo'
 import { MyPostsNew } from '../components/MyPostsNew'
+import { ItemMemoForm } from '../components/ItemMemoForm'
+import { DailyBuyForm } from '../components/DailyBuyForm'
 import Image from 'next/image'
 
 type Category = '肉' | '魚' | '野菜' | '冷凍食品' | 'その他'
@@ -41,6 +43,7 @@ export default function KauPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [activeTab, setActiveTab] = useState<'item' | 'daily' | 'detail'>('item')
 
   // カテゴリに応じた単位リスト
   const availableUnits = category ? getUnitsForCategory(category) : []
@@ -131,13 +134,67 @@ export default function KauPage() {
         {/* これから買うメモ */}
         <ShoppingMemo />
 
-        {/* 地域選択 */}
-        <div className="mb-6 p-4 bg-white rounded-2xl shadow-sm border border-gray-200">
-          <RegionSelector value={selectedRegion} onChange={setSelectedRegion} />
+        {/* タブ */}
+        <div className="mb-4 flex gap-2 border-b border-gray-200">
+          <button
+            type="button"
+            onClick={() => setActiveTab('item')}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'item'
+                ? 'text-emerald-600 border-b-2 border-emerald-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            単品メモ
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('daily')}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'daily'
+                ? 'text-emerald-600 border-b-2 border-emerald-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            今日の買い物
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('detail')}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'detail'
+                ? 'text-emerald-600 border-b-2 border-emerald-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            詳細記録
+          </button>
         </div>
 
-        {/* 入力フォーム */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 space-y-4 sm:space-y-6">
+        {/* 地域選択（詳細記録タブのみ） */}
+        {activeTab === 'detail' && (
+          <div className="mb-6 p-4 bg-white rounded-2xl shadow-sm border border-gray-200">
+            <RegionSelector value={selectedRegion} onChange={setSelectedRegion} />
+          </div>
+        )}
+
+        {/* タブコンテンツ */}
+        {activeTab === 'item' && (
+          <ItemMemoForm
+            userUuid={userUuid}
+            onSuccess={() => setRefreshKey(prev => prev + 1)}
+          />
+        )}
+
+        {activeTab === 'daily' && (
+          <DailyBuyForm
+            userUuid={userUuid}
+            onSuccess={() => setRefreshKey(prev => prev + 1)}
+          />
+        )}
+
+        {activeTab === 'detail' && (
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* カテゴリ選択 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -320,10 +377,13 @@ export default function KauPage() {
               <p className="text-xs sm:text-sm mt-1">続けて記録できます</p>
             </div>
           )}
-        </form>
+          </form>
+        )}
 
-        {/* 買って記録した一覧 */}
-        <MyPostsNew userUuid={userUuid} refreshKey={refreshKey} />
+        {/* 買って記録した一覧（詳細記録タブのみ） */}
+        {activeTab === 'detail' && (
+          <MyPostsNew userUuid={userUuid} refreshKey={refreshKey} />
+        )}
 
         {/* ナビゲーション */}
         <div className="mt-6 flex gap-2 sm:gap-4">
