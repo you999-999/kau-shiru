@@ -45,6 +45,7 @@ export function DailyQuote({ region }: DailyQuoteProps) {
     }
   }, [region])
 
+  // ページ遷移時（マウント時）と地域変更時に再取得
   useEffect(() => {
     const fetchQuote = async () => {
       try {
@@ -67,6 +68,30 @@ export function DailyQuote({ region }: DailyQuoteProps) {
 
     fetchQuote()
   }, [currentRegion])
+  
+  // ページ表示時（マウント時）にも必ず再取得（ページ遷移を検知）
+  useEffect(() => {
+    const fetchQuote = async () => {
+      try {
+        setLoading(true)
+        const result = await getTodayQuote(currentRegion)
+        
+        if (result.success && result.data) {
+          setQuote(result.data)
+        } else {
+          setQuote(null)
+        }
+      } catch (error) {
+        setQuote(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    // マウント時のみ実行（ページ遷移時）
+    fetchQuote()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // マウント時のみ実行
 
   // ローディング中は何も表示しない
   if (loading) {

@@ -182,6 +182,11 @@ export default function KauPage() {
         {activeTab === 'item' && (
           <ItemMemoForm
             userUuid={userUuid}
+            region={{
+              big: selectedRegion.big,
+              prefecture: selectedRegion.prefecture,
+              city: selectedRegion.city,
+            }}
             onSuccess={() => setRefreshKey(prev => prev + 1)}
           />
         )}

@@ -7,15 +7,21 @@ import { RecordSummaryModal } from './RecordSummaryModal'
 
 interface ItemMemoFormProps {
   userUuid: string | null
+  region?: {
+    big?: string
+    prefecture?: string
+    city?: string
+  }
   onSuccess?: () => void
 }
 
-export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
+export function ItemMemoForm({ userUuid, region, onSuccess }: ItemMemoFormProps) {
   const [category, setCategory] = useState<string>('')
   const [itemName, setItemName] = useState<string>('')
   const [price, setPrice] = useState<string>('')
   const [quantity, setQuantity] = useState<string>('')
   const [unit, setUnit] = useState<string>('')
+  const [sentiment, setSentiment] = useState<number | null>(null)
   const [extraFlag, setExtraFlag] = useState<boolean>(false)
   const [comment, setComment] = useState<string>('')
   const [isPublic, setIsPublic] = useState<boolean>(true)
@@ -28,6 +34,7 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
     price?: number
     quantity?: string
     unit?: string
+    sentiment?: number
     extraFlag?: boolean
     comment?: string
   }>({})
@@ -61,11 +68,12 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
         price: price ? parseInt(price) : undefined,
         quantity_note: quantityNote,
         extra_flag: extraFlag || undefined,
+        sentiment: sentiment || undefined,
         comment: comment || undefined,
         is_public: isPublic,
       }
 
-      const result = await saveItemLog(userUuid, data)
+      const result = await saveItemLog(userUuid, data, region)
 
       if (result.success) {
         setSubmitSuccess(true)
@@ -77,6 +85,7 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
           price: price ? parseInt(price) : undefined,
           quantity: quantity || undefined,
           unit: unit || undefined,
+          sentiment: sentiment || undefined,
           extraFlag: extraFlag || undefined,
           comment: comment || undefined,
         })
@@ -90,6 +99,7 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
         setPrice('')
         setQuantity('')
         setUnit('')
+        setSentiment(null)
         setExtraFlag(false)
         setComment('')
         setIsPublic(true)
@@ -217,6 +227,26 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
         </div>
       </div>
 
+      {/* 感情 */}
+      <div>
+        <label htmlFor="sentiment" className="block text-sm font-medium text-gray-700 mb-2">
+          感情（任意）
+        </label>
+        <select
+          id="sentiment"
+          value={sentiment || ''}
+          onChange={(e) => setSentiment(e.target.value ? parseInt(e.target.value) : null)}
+          className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:outline-none text-sm"
+        >
+          <option value="">選択しない</option>
+          <option value="1">1: 高過ぎ</option>
+          <option value="2">2: ちょい高い</option>
+          <option value="3">3: 普通</option>
+          <option value="4">4: 安い</option>
+          <option value="5">5: 神コスパ</option>
+        </select>
+      </div>
+
       {/* 余分だったかも */}
       <div>
         <label className="flex items-center gap-2 cursor-pointer">
@@ -268,7 +298,7 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
             : 'bg-gray-300 text-gray-600 cursor-not-allowed'
         }`}
       >
-        {isSubmitting ? '保存中...' : 'メモする'}
+        {isSubmitting ? '保存中...' : '記録する'}
       </button>
 
       {submitSuccess && (

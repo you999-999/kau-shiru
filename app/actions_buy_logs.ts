@@ -9,6 +9,7 @@ export interface ItemLogData {
   price?: number
   quantity_note?: string
   extra_flag?: boolean
+  sentiment?: number // 1-5の感情レベル
   comment?: string
   is_public?: boolean
 }
@@ -35,6 +36,7 @@ export interface BuyLog {
   price?: number | null
   quantity_note?: string | null
   extra_flag?: boolean | null
+  sentiment?: number | null
   comment?: string | null
   // 今日の買い物用
   total_price?: number | null
@@ -44,7 +46,11 @@ export interface BuyLog {
 }
 
 // 単品メモを保存
-export async function saveItemLog(userUuid: string, data: ItemLogData): Promise<{ success: boolean; error?: string }> {
+export async function saveItemLog(
+  userUuid: string, 
+  data: ItemLogData,
+  region?: { big?: string; prefecture?: string; city?: string }
+): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = createServerClient()
     
@@ -59,6 +65,7 @@ export async function saveItemLog(userUuid: string, data: ItemLogData): Promise<
     if (data.price !== undefined && data.price !== null) insertData.price = data.price
     if (data.quantity_note) insertData.quantity_note = data.quantity_note
     if (data.extra_flag !== undefined) insertData.extra_flag = data.extra_flag
+    if (data.sentiment !== undefined && data.sentiment !== null) insertData.sentiment = data.sentiment
     if (data.comment) insertData.comment = data.comment
     
     const { error } = await supabase
@@ -98,6 +105,17 @@ export async function saveItemLog(userUuid: string, data: ItemLogData): Promise<
           quoteData.item_name = data.item_name
         } else if (data.category) {
           quoteData.item_name = data.category
+        }
+        
+        // 地域情報を追加
+        if (region?.big) {
+          quoteData.region_big = region.big
+        }
+        if (region?.prefecture) {
+          quoteData.region_pref = region.prefecture
+        }
+        if (region?.city) {
+          quoteData.region_city = region.city
         }
         
         const { error: quoteError } = await supabase
