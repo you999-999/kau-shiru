@@ -4,6 +4,7 @@ import { createServerClient } from '@/utils/supabase/server'
 
 // 単品メモ用データ
 export interface ItemLogData {
+  item_name?: string
   category?: string
   price?: number
   quantity_note?: string
@@ -29,6 +30,7 @@ export interface BuyLog {
   log_type: 'item' | 'daily'
   is_public: boolean
   // 単品メモ用
+  item_name?: string | null
   category?: string | null
   price?: number | null
   quantity_note?: string | null
@@ -52,6 +54,7 @@ export async function saveItemLog(userUuid: string, data: ItemLogData): Promise<
       is_public: data.is_public !== undefined ? data.is_public : true,
     }
     
+    if (data.item_name) insertData.item_name = data.item_name
     if (data.category) insertData.category = data.category
     if (data.price !== undefined && data.price !== null) insertData.price = data.price
     if (data.quantity_note) insertData.quantity_note = data.quantity_note
@@ -90,8 +93,10 @@ export async function saveItemLog(userUuid: string, data: ItemLogData): Promise<
           }
         }
         
-        // categoryをitem_nameとして使用（簡易版）
-        if (data.category) {
+        // item_nameを優先、なければcategoryを使用
+        if (data.item_name) {
+          quoteData.item_name = data.item_name
+        } else if (data.category) {
           quoteData.item_name = data.category
         }
         

@@ -73,6 +73,11 @@ export function BuyLogsDisplay() {
                   </div>
                   <span className="text-xs text-gray-400">{formatDate(log.created_at)}</span>
                 </div>
+                {log.item_name && (
+                  <div className="text-base font-semibold text-gray-900 mb-1">
+                    {log.item_name}
+                  </div>
+                )}
                 {log.price && (
                   <div className="text-lg font-bold text-gray-900 mb-1">
                     {log.price.toLocaleString()}円

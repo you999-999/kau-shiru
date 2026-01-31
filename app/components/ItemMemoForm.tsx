@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { saveItemLog, type ItemLogData } from '../actions_buy_logs'
 import { getUnitsForCategory } from '../data/units'
+import { RecordSummaryModal } from './RecordSummaryModal'
 
 interface ItemMemoFormProps {
   userUuid: string | null
@@ -11,6 +12,7 @@ interface ItemMemoFormProps {
 
 export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
   const [category, setCategory] = useState<string>('')
+  const [itemName, setItemName] = useState<string>('')
   const [price, setPrice] = useState<string>('')
   const [quantity, setQuantity] = useState<string>('')
   const [unit, setUnit] = useState<string>('')
@@ -19,6 +21,16 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
   const [isPublic, setIsPublic] = useState<boolean>(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [showSummary, setShowSummary] = useState(false)
+  const [savedData, setSavedData] = useState<{
+    category?: string
+    itemName?: string
+    price?: number
+    quantity?: string
+    unit?: string
+    extraFlag?: boolean
+    comment?: string
+  }>({})
 
   const categories = ['肉', '魚', '野菜', '冷凍食品', 'その他'] as const
   const availableUnits = category ? getUnitsForCategory(category as '肉' | '魚' | '野菜' | '冷凍食品' | 'その他') : []
@@ -44,6 +56,7 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
       }
 
       const data: ItemLogData = {
+        item_name: itemName || undefined,
         category: category || undefined,
         price: price ? parseInt(price) : undefined,
         quantity_note: quantityNote,
@@ -56,8 +69,24 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
 
       if (result.success) {
         setSubmitSuccess(true)
+        
+        // 記録内容を保存（モーダル表示用）
+        setSavedData({
+          category: category || undefined,
+          itemName: itemName || undefined,
+          price: price ? parseInt(price) : undefined,
+          quantity: quantity || undefined,
+          unit: unit || undefined,
+          extraFlag: extraFlag || undefined,
+          comment: comment || undefined,
+        })
+        
+        // モーダルを表示
+        setShowSummary(true)
+        
         // フォームリセット
         setCategory('')
+        setItemName('')
         setPrice('')
         setQuantity('')
         setUnit('')
@@ -107,6 +136,21 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* 商品名 */}
+      <div>
+        <label htmlFor="item-name" className="block text-sm font-medium text-gray-700 mb-2">
+          商品名（任意）
+        </label>
+        <input
+          id="item-name"
+          type="text"
+          value={itemName}
+          onChange={(e) => setItemName(e.target.value)}
+          placeholder="例：大根、キャベツ、鶏もも"
+          className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:outline-none text-sm"
+        />
       </div>
 
       {/* 金額 */}
@@ -232,6 +276,13 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
           <p className="font-bold text-sm">メモ完了！✨</p>
         </div>
       )}
+
+      {/* 記録内容表示モーダル */}
+      <RecordSummaryModal
+        isOpen={showSummary}
+        onClose={() => setShowSummary(false)}
+        data={savedData}
+      />
     </form>
   )
 }
