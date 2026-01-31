@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { saveItemLog, type ItemLogData } from '../actions_buy_logs'
+import { getUnitsForCategory } from '../data/units'
 
 interface ItemMemoFormProps {
   userUuid: string | null
@@ -11,14 +12,16 @@ interface ItemMemoFormProps {
 export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
   const [category, setCategory] = useState<string>('')
   const [price, setPrice] = useState<string>('')
-  const [quantityNote, setQuantityNote] = useState<string>('')
+  const [quantity, setQuantity] = useState<string>('')
+  const [unit, setUnit] = useState<string>('')
   const [extraFlag, setExtraFlag] = useState<boolean>(false)
   const [comment, setComment] = useState<string>('')
   const [isPublic, setIsPublic] = useState<boolean>(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
 
-  const categories = ['肉', '魚', '野菜', '冷凍食品', 'その他']
+  const categories = ['肉', '魚', '野菜', '冷凍食品', 'その他'] as const
+  const availableUnits = category ? getUnitsForCategory(category as '肉' | '魚' | '野菜' | '冷凍食品' | 'その他') : []
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,10 +34,19 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
     setIsSubmitting(true)
 
     try {
+      // 量と単位を結合してquantity_noteに保存
+      let quantityNote: string | undefined = undefined
+      if (quantity || unit) {
+        const parts: string[] = []
+        if (quantity) parts.push(quantity)
+        if (unit) parts.push(unit)
+        quantityNote = parts.join('')
+      }
+
       const data: ItemLogData = {
         category: category || undefined,
         price: price ? parseInt(price) : undefined,
-        quantity_note: quantityNote || undefined,
+        quantity_note: quantityNote,
         extra_flag: extraFlag || undefined,
         comment: comment || undefined,
         is_public: isPublic,
@@ -47,7 +59,8 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
         // フォームリセット
         setCategory('')
         setPrice('')
-        setQuantityNote('')
+        setQuantity('')
+        setUnit('')
         setExtraFlag(false)
         setComment('')
         setIsPublic(true)
@@ -80,7 +93,10 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
             <button
               key={cat}
               type="button"
-              onClick={() => setCategory(cat)}
+              onClick={() => {
+                setCategory(cat)
+                setUnit('') // カテゴリ変更時に単位をリセット
+              }}
               className={`p-2 sm:p-3 rounded-lg border-2 transition-all text-xs sm:text-sm ${
                 category === cat
                   ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold'
@@ -109,19 +125,52 @@ export function ItemMemoForm({ userUuid, onSuccess }: ItemMemoFormProps) {
         />
       </div>
 
-      {/* 量 */}
-      <div>
-        <label htmlFor="quantity-note" className="block text-sm font-medium text-gray-700 mb-2">
-          量（任意）
-        </label>
-        <input
-          id="quantity-note"
-          type="text"
-          value={quantityNote}
-          onChange={(e) => setQuantityNote(e.target.value)}
-          placeholder="例：1パック、300g"
-          className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:outline-none text-sm"
-        />
+      {/* 量と単位 */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-4">
+        <div>
+          <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">
+            量（任意）
+          </label>
+          <input
+            id="quantity"
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            placeholder="例：1"
+            className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:outline-none text-sm"
+            min="0"
+          />
+        </div>
+        <div>
+          <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-2">
+            単位（任意）
+          </label>
+          {category ? (
+            <select
+              id="unit"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:outline-none text-sm"
+            >
+              <option value="">選択しない</option>
+              {availableUnits.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              id="unit"
+              type="text"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              placeholder="例：g、個"
+              className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:outline-none text-sm"
+              disabled
+            />
+          )}
+        </div>
       </div>
 
       {/* 余分だったかも */}

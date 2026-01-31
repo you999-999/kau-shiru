@@ -67,6 +67,51 @@ export async function saveItemLog(userUuid: string, data: ItemLogData): Promise<
       return { success: false, error: error.message }
     }
     
+    // commentがある場合、daily_quotesにも保存（今日のひとこと用）
+    if (data.comment && data.comment.trim()) {
+      try {
+        const commentText = data.comment.trim().substring(0, 20)
+        const quoteData: any = {
+          content: commentText,
+        }
+        
+        if (data.price !== undefined && data.price !== null) {
+          quoteData.price = data.price
+        }
+        
+        // quantity_noteから数値と単位を抽出（例：「1パック」「300g」）
+        if (data.quantity_note) {
+          const match = data.quantity_note.match(/^(\d+)(.*)$/)
+          if (match) {
+            quoteData.quantity = parseInt(match[1])
+            if (match[2]) {
+              quoteData.unit = match[2].trim()
+            }
+          }
+        }
+        
+        // categoryをitem_nameとして使用（簡易版）
+        if (data.category) {
+          quoteData.item_name = data.category
+        }
+        
+        const { error: quoteError } = await supabase
+          .from('daily_quotes')
+          .insert(quoteData)
+        
+        if (quoteError) {
+          // カラムが存在しないエラーは無視（テーブルが存在しない場合など）
+          if (quoteError.code === 'PGRST204' || quoteError.code === '42703' || quoteError.code === 'PGRST205' || quoteError.message?.includes('Could not find')) {
+            console.warn('daily_quotes保存をスキップ:', quoteError.message)
+          } else {
+            console.warn('Failed to save daily quote:', quoteError)
+          }
+        }
+      } catch (quoteErr) {
+        console.warn('Error saving daily quote:', quoteErr)
+      }
+    }
+    
     return { success: true }
   } catch (error: any) {
     console.error('Error saving item log:', error)
@@ -97,6 +142,41 @@ export async function saveDailyLog(userUuid: string, data: DailyLogData): Promis
     if (error) {
       console.error('Error saving daily log:', error)
       return { success: false, error: error.message }
+    }
+    
+    // daily_commentがある場合、daily_quotesにも保存（今日のひとこと用）
+    if (data.daily_comment && data.daily_comment.trim()) {
+      try {
+        const commentText = data.daily_comment.trim().substring(0, 20)
+        const quoteData: any = {
+          content: commentText,
+        }
+        
+        if (data.total_price !== undefined && data.total_price !== null) {
+          quoteData.price = data.total_price
+        }
+        
+        // 今日の買い物なので、days_coveredをquantityとして使用
+        if (data.days_covered !== undefined && data.days_covered !== null) {
+          quoteData.quantity = data.days_covered
+          quoteData.unit = '日分'
+        }
+        
+        const { error: quoteError } = await supabase
+          .from('daily_quotes')
+          .insert(quoteData)
+        
+        if (quoteError) {
+          // カラムが存在しないエラーは無視（テーブルが存在しない場合など）
+          if (quoteError.code === 'PGRST204' || quoteError.code === '42703' || quoteError.code === 'PGRST205' || quoteError.message?.includes('Could not find')) {
+            console.warn('daily_quotes保存をスキップ:', quoteError.message)
+          } else {
+            console.warn('Failed to save daily quote:', quoteError)
+          }
+        }
+      } catch (quoteErr) {
+        console.warn('Error saving daily quote:', quoteErr)
+      }
     }
     
     return { success: true }
